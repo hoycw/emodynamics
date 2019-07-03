@@ -6,9 +6,9 @@ if exist('/home/knight/hoycw/','dir')
 elseif exist('/Volumes/hoycw_clust/','dir')
     root_dir = '/Volumes/hoycw_clust/';
     app_dir   = '/Users/colinhoy/Code/Apps/';
-% elseif exist('/Users/SCS22/','dir');
-%     root_dir='/Users/SCS22/Desktop/Knight_Lab/';
-%     app_dir='/Users/SCS22/Documents/MATLAB/';
+elseif exist('G:\','dir');
+    root_dir='G:\';
+    app_dir='C:\Toolbox';
 else
     error('root directory not found. where are you running this?');
 end

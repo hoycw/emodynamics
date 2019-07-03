@@ -14,7 +14,7 @@ function SBJ00_cleaning_prep(SBJ,plot_psd)
 %   raw_psds/- PSDs of channels as determined by plot_psd
 
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
-elseif exist('G:\','dir');root_dir='G:\';ft_dir=['C:\Toolbox\fieldtrip\'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir=[root_dir 'C:\Toolbox\fieldtrip\'];
 elseif root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
@@ -45,8 +45,8 @@ for b_ix = 1:numel(SBJ_vars.raw_file)
         block_suffix = SBJ_vars.block_name{b_ix};   % should just be ''
     end
     %% Set up directories
-%     psd_dir = strcat(SBJ_vars.dirs.import,'raw_psds/');
-    psd_dir = strcat(SBJ_vars.dirs.import,fullfile('raw_psds',filesep));
+    psd_dir = strcat(SBJ_vars.dirs.import,'raw_psds/');
+    psd_dir = strcat(SBJ_vars.dirs.import,fullfile('raw_psds/');
     
     if ~exist(psd_dir,'dir')
         mkdir(psd_dir);
@@ -64,18 +64,11 @@ for b_ix = 1:numel(SBJ_vars.raw_file)
     end
     
     %% Check for problematic labels
-%     for ch_ix = 1:numel(data.label)
-%         if ~isempty(find(data.label{ch_ix}=='/',1))   % These will mess up paths when saved
-%             data.label{ch_ix}(data.label{ch_ix}=='/') = '_';
-%         end
-%     end
-
     for ch_ix = 1:numel(data.label)
-        if ~isempty(find(data.label{ch_ix}==fullfile(filesep),1))   % These will mess up paths when saved
-            data.label{ch_ix}(data.label{ch_ix}==fullfile(filesep)) = '_';
+        if ~isempty(find(data.label{ch_ix}=='/',1))   % These will mess up paths when saved
+            data.label{ch_ix}(data.label{ch_ix}=='/') = '_';
         end
-    end    
-    
+    end
     
     %% Check noise profile
     if strcmp(plot_psd,'all')
