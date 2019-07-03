@@ -1,5 +1,5 @@
 %% ${SBJ} Processing Variables
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
+[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir fullfile('fieldtrip',filesep)];
 if isempty(strfind(path,'fieldtrip'))
     addpath(ft_dir);
     ft_defaults
@@ -13,14 +13,14 @@ SBJ_vars.raw_file = {''};
 SBJ_vars.block_name = {''};
 SBJ_vars.low_srate  = [0];
 
-SBJ_vars.dirs.SBJ     = [root_dir 'PRJ_Stroop/data/' SBJ_vars.SBJ '/'];
-SBJ_vars.dirs.raw     = [SBJ_vars.dirs.SBJ '00_raw/'];
+SBJ_vars.dirs.SBJ     = [root_dir fullfile('PRJ_Stroop', 'data', SBJ_vars.SBJ, filesep)];
+SBJ_vars.dirs.raw     = [SBJ_vars.dirs.SBJ fullfile('00_raw',filesep,)];
 % SBJ_vars.dirs.SU      = [SBJ_vars.dirs.raw 'SU_2018-06-XX/'];
-SBJ_vars.dirs.import  = [SBJ_vars.dirs.SBJ '01_import/'];
-SBJ_vars.dirs.preproc = [SBJ_vars.dirs.SBJ '02_preproc/'];
-SBJ_vars.dirs.events  = [SBJ_vars.dirs.SBJ '03_events/'];
-SBJ_vars.dirs.proc    = [SBJ_vars.dirs.SBJ '04_proc/'];
-SBJ_vars.dirs.recon   = [SBJ_vars.dirs.SBJ '05_recon/'];
+SBJ_vars.dirs.import  = [SBJ_vars.dirs.SBJ fullfile ('01_import', filesep)];
+SBJ_vars.dirs.preproc = [SBJ_vars.dirs.SBJ fullfile ('02_preproc', filesep)];
+SBJ_vars.dirs.events  = [SBJ_vars.dirs.SBJ fullfile ('03_events', filesep)];
+SBJ_vars.dirs.proc    = [SBJ_vars.dirs.SBJ fullfile ('04_proc', filesep)];
+SBJ_vars.dirs.recon   = [SBJ_vars.dirs.SBJ fullfile ('05_recon', filesep];
 if ~exist(SBJ_vars.dirs.import,'dir')
     mkdir(SBJ_vars.dirs.import);
 end
@@ -39,14 +39,14 @@ end
 
 SBJ_vars.dirs.raw_filename = strcat(SBJ_vars.dirs.raw,SBJ_vars.raw_file);
 
-SBJ_vars.recon.surf_l     = [SBJ_vars.dirs.recon 'Surfaces/' SBJ_vars.SBJ '_cortex_lh.mat'];
-SBJ_vars.recon.surf_r     = [SBJ_vars.dirs.recon 'Surfaces/' SBJ_vars.SBJ '_cortex_rh.mat'];
-SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes/' SBJ_vars.SBJ '_elec_acpc_....mat'];
-SBJ_vars.recon.elec_mni_v = [SBJ_vars.dirs.recon 'Electrodes/' SBJ_vars.SBJ '_elec_mni_v.mat'];
+SBJ_vars.recon.surf_l     = [SBJ_vars.dirs.recon 'Surfaces' fullsile(filesep) SBJ_vars.SBJ '_cortex_lh.mat'];
+SBJ_vars.recon.surf_r     = [SBJ_vars.dirs.recon 'Surfaces' fullsile(filesep) SBJ_vars.SBJ '_cortex_rh.mat'];
+SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes' fullsile(filesep) SBJ_vars.SBJ '_elec_acpc_....mat'];
+SBJ_vars.recon.elec_mni_v = [SBJ_vars.dirs.recon 'Electrodes' fullsile(filesep) SBJ_vars.SBJ '_elec_mni_v.mat'];
 SBJ_vars.recon.elec_mni_s = [];%SBJ_vars.dirs.recon 'Electrodes/' SBJ_vars.SBJ '_elec_mni_s.mat'];
-SBJ_vars.recon.fs_T1      = [SBJ_vars.dirs.recon 'Scans/' SBJ_vars.SBJ '_fs_preop_T1.mgz'];
-SBJ_vars.recon.fs_DK      = [SBJ_vars.dirs.recon 'Scans/' SBJ_vars.SBJ '_fs_preop_aparc+aseg.mgz'];
-SBJ_vars.recon.fs_Dx      = [SBJ_vars.dirs.recon 'Scans/' SBJ_vars.SBJ '_fs_preop_aparc.a2009s+aseg.mgz'];
+SBJ_vars.recon.fs_T1      = [SBJ_vars.dirs.recon 'Scans' fullsile(filesep) SBJ_vars.SBJ '_fs_preop_T1.mgz'];
+SBJ_vars.recon.fs_DK      = [SBJ_vars.dirs.recon 'Scans' fullsile(filesep) SBJ_vars.SBJ '_fs_preop_aparc+aseg.mgz'];
+SBJ_vars.recon.fs_Dx      = [SBJ_vars.dirs.recon 'Scans' fullsile(filesep) SBJ_vars.SBJ '_fs_preop_aparc.a2009s+aseg.mgz'];
 
 %--------------------------------------
 % Channel Selection
