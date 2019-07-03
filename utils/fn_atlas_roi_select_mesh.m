@@ -1,8 +1,8 @@
 function roi_lab = fn_atlas_roi_select_mesh(atlas_id, roi_id, hemi)
 %% Returns ROI labels for plotting that ROI's mesh in a given atlas
 
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
-tsv_fname = [root_dir 'emodynamics/data/atlases/atlas_mappings/atlas_ROI_mappings_' atlas_id '_both_hemi.tsv'];
+[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip' filesep];
+tsv_fname = fullfile(root_dir,'emodynamics','data','atlases','atlas_mappings',['atlas_ROI_mappings_' atlas_id '_both_hemi.tsv']);
 fprintf('\tReading roi csv file: %s\n', tsv_fname);
 roi_file = fopen(tsv_fname, 'r');
 % roi.csv contents:

@@ -9,7 +9,7 @@ function cut_epochs = fn_convert_epochs_full2at(epochs,analysis_time,full_filena
 %       0: remove epochs without FULL overlap with valid segments
 %       1: trim epoch edges to include only valid points
 %       NOTE: completely non-overlapping epochs will be removed in both cases!
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
+[~, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip' filesep];
 addpath(ft_dir);
 ft_defaults
 
