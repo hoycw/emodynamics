@@ -8,11 +8,11 @@ function [at_epochs] = fn_compile_epochs_full2at(SBJ,proc_id)
 
 % Add paths
 [root_dir,~] = fn_get_root_dir();
-addpath([root_dir 'emodynamics/scripts/utils/']);
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 
 % Load SBJ and processing vars
-eval(['run ' root_dir 'emodynamics/scripts/proc_vars/' proc_id '_vars.m']);
-eval(['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m']);
+eval(['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])]);
+eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
 
 % Load bad_epochs from preclean data and adjust to analysis_time
 at_epochs = cell([numel(SBJ_vars.block_name) 1]);
@@ -27,11 +27,11 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     else
         block_suffix = SBJ_vars.block_name{b_ix};   % should just be ''
     end
-    bad_preclean = load([SBJ_vars.dirs.events,SBJ_vars.SBJ,'_bob_bad_epochs_preclean',block_suffix,'.mat']);
+    bad_preclean = load(fullfile(SBJ_vars.dirs.events,[SBJ '_bob_bad_epochs_preclean' block_suffix '.mat']));
     % Adjust to analysis_time
     if ~isempty(bad_preclean.bad_epochs)
         at_epochs{b_ix} = fn_convert_epochs_full2at(bad_preclean.bad_epochs,SBJ_vars.analysis_time{b_ix},...
-            strcat(SBJ_vars.dirs.preproc,SBJ_vars.SBJ,'_preclean',block_suffix,'.mat'),1);
+            fullfile(SBJ_vars.dirs.preproc,[SBJ '_preclean' block_suffix '.mat']),1);
     end
 end
 

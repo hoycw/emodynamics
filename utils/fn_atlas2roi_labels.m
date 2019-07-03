@@ -7,7 +7,7 @@ function roi_labels = fn_atlas2roi_labels(labels, atlas_id, roi_id)
 [root_dir, ~] = fn_get_root_dir();
 
 %% Read in Atlas to ROI mappings
-tsv_filename = [root_dir 'emodynamics/data/atlases/atlas_mappings/atlas_ROI_mappings_' atlas_id '.tsv'];
+tsv_filename = fullfile(root_dir,'emodynamics','data','atlases','atlas_mappings',['atlas_ROI_mappings_' atlas_id '.tsv']);
 fprintf('\tReading roi csv file: %s\n', tsv_filename);
 roi_file = fopen(tsv_filename, 'r');
 % roi.csv contents:

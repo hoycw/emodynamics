@@ -11,15 +11,15 @@ function fn_compile_elec_atlas(SBJ,proc_id,view_space,reg_type,atlas_id)
 %   atlas_id [str] - {'DK','Dx','Yeo7','Yeo17'}
 
 % Set up paths
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
-addpath([root_dir 'emodynamics/scripts/']);
-addpath([root_dir 'emodynamics/scripts/utils/']);
+[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip' filesep];
+addpath(fullfile(root_dir,'emodynamics','scripts'));
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
 %% Load variables
-eval(['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m']);
-eval(['run ' root_dir 'emodynamics/scripts/proc_vars/' proc_id '_vars.m']);
+eval(['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])]);
+eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
 
 %% Load Elec struct
 if ~isempty(reg_type)
@@ -31,8 +31,8 @@ else
     reg_suffix = '';
 end
 
-elec_fname = [SBJ_vars.dirs.recon,SBJ,'_elec_',proc_id,'_',view_space,reg_suffix,'_orig_',atlas_id,'.mat'];
-out_fname  = [SBJ_vars.dirs.recon,SBJ,'_elec_',proc_id,'_',view_space,reg_suffix,'_',atlas_id,'_full.mat'];
+elec_fname = fullfile(SBJ_vars.dirs.recon,[SBJ '_elec_' proc_id '_' view_space reg_suffix '_orig_' atlas_id '.mat']);
+out_fname  = fullfile(SBJ_vars.dirs.recon,[SBJ '_elec_' proc_id '_' view_space reg_suffix '_' atlas_id '_full.mat']);
 load(elec_fname);
 
 %% For grids/strips only, add GM weight and exit
