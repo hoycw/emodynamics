@@ -1,5 +1,5 @@
-%% ${SBJ} Processing Variables
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir fullfile('fieldtrip',filesep)];
+%% ${IR51} Processing Variables
+[root_dir, app_dir] = fn_get_root_dir(); ft_dir = fullfile(app_dir,'fieldtrip');
 if isempty(strfind(path,'fieldtrip'))
     addpath(ft_dir);
     ft_defaults
@@ -8,8 +8,8 @@ end
 %--------------------------------------
 % Basics
 %--------------------------------------
-SBJ_vars.SBJ = '';
-SBJ_vars.raw_file = {''};
+SBJ_vars.SBJ = 'IR51';
+SBJ_vars.raw_file = {'IR51.besa'};
 SBJ_vars.block_name = {''};
 SBJ_vars.low_srate  = [0];
 
@@ -55,9 +55,9 @@ SBJ_vars.recon.fs_Dx      = [SBJ_vars.dirs.recon 'Scans' fullfile(filesep) SBJ_v
 %--------------------------------------
 % Channel Selection
 %--------------------------------------
-SBJ_vars.ch_lab.probes     = {}; % e.g., 'LAM', 'RAM', 'LTH', etc.
-SBJ_vars.ch_lab.probe_type = {}; % 'seeg' or 'ecog'
-SBJ_vars.ch_lab.ref_type   = {}; % either 'BP' or 'CAR or 'CARall'
+SBJ_vars.ch_lab.probes     = {'ROF', 'RIN', 'RAC', 'LTH', 'SMA', 'RAM', 'RHH', 'RTH', 'LAM', 'LHH'};
+SBJ_vars.ch_lab.probe_type = {'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg'};
+SBJ_vars.ch_lab.ref_type   = {'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP'};
 if ~all(numel(SBJ_vars.ch_lab.probes)==[numel(SBJ_vars.ch_lab.probe_type) numel(SBJ_vars.ch_lab.ref_type)]); error('probes ~= type+ref');end; % this compare the number of channels of the above 3 lines
 SBJ_vars.ch_lab.ROI        = {'all'};
 
@@ -65,30 +65,24 @@ SBJ_vars.ch_lab.ROI        = {'all'};
 %SBJ_vars.ch_lab.suffix = '-Ref';    % after every channel except 'EDF Annotations'
 %SBJ_vars.ch_lab.mislabel = {{'RLT12','FPG12'},{'IH;L8','IHL8'}};
 
-% Below is only for SU patients
-% SBJ_vars.ch_lab.nlx          = [1,1,1,0,0,0,1,1,1,1,0,0];
-% SBJ_vars.ch_lab.wires        = {'mram','mrhh','mrth','mlam','mlhh','mlth'};
-% SBJ_vars.ch_lab.wire_type    = {'su','su','su','su','su','su'};
-% SBJ_vars.ch_lab.wire_ref     = {'','','','','',''};
-% SBJ_vars.ch_lab.wire_ROI     = {'all'};
-% SBJ_vars.ch_lab.nlx_suffix   = '_00XX';
-% SBJ_vars.ch_lab.nlx_nk_align = {'LAP4','LAP5'};
-% SBJ_vars.nlx_macro_inverted  = 1;
-
-
 SBJ_vars.ch_lab.ref_exclude = {}; % exclude from the CAR (less used for sEEG)
 SBJ_vars.ch_lab.bad = {...
+    'LTH3', 'LTH4', 'LHH3','LHH4',... % Drifting, noisy
+    'RHH1','RHH2','RHH3','RTH1','RTH2','RTH3','RAM1','RAM2','RAM3','RAM4',... % Epileptic
+    'LTH10',...% Slowing noise
+    'xref', 'Gnd', 'E', 'DC01', 'DC04','*-1', '*-2'...
     };
+% Note: LHH8 drifting 
+
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
-SBJ_vars.ch_lab.bad_code = [];
+SBJ_vars.ch_lab.bad_code = [2,2,2,2,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0];
 if numel(SBJ_vars.ch_lab.bad)~=numel(SBJ_vars.ch_lab.bad_code);error('bad ~= bad_code');end
-SBJ_vars.ch_lab.eeg = {};
-SBJ_vars.ch_lab.eog = {};
-SBJ_vars.ch_lab.photod = {};     % From experimenter notes (e.g., when noted as '1', means 'DC01') 
-SBJ_vars.ch_lab.speaker    = {}; % From experimenter notes 
-SBJ_vars.ch_lab.ekg    = {}; 
-
+SBJ_vars.ch_lab.eeg = {'FZ','CZ','OZ','C3','C4'};
+SBJ_vars.ch_lab.eog = {'LUE','LLE','RUE','RLE'};
+SBJ_vars.ch_lab.photod = {'DC02'};
+SBJ_vars.ch_lab.speaker    = {'DC03'};
+SBJ_vars.ch_lab.ekg = {'ekg'}
 %--------------------------------------
 % Line Noise Parameters
 %--------------------------------------

@@ -41,32 +41,20 @@ end
 
 %% Check which root directory
 if exist('/home/knight/','dir');root_dir='/home/knight/';app_dir=[root_dir 'hoycw/Apps/'];
+elseif exist('G:\','dir');root_dir='G:\';app_dir=['C:\Toolbox\'];
 else root_dir='/Volumes/hoycw_clust/';app_dir='/Users/colinhoy/Code/Apps/';end
 
 %% Set Up Directories
-addpath([root_dir 'emodynamics/scripts/']);
-addpath([root_dir 'emodynamics/scripts/utils/']);
-addpath([app_dir 'fieldtrip/']);
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
+addpath(fullfile(root_dir,'emodynamics','scripts'));
+addpath(fullfile(app_dir, 'fieldtrip'));
 ft_defaults
 
+
 %% ========================================================================
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
 
-% %% Keep any real but "bad" channels
-% toss = ones(size(SBJ_vars.ch_lab.bad));
-% for bad_ix = 1:numel(SBJ_vars.ch_lab.bad)
-%     ch_match = zeros(size(SBJ_vars.ch_lab.probes));
-%     for probe_ix = 1:numel(SBJ_vars.ch_lab.probes)
-%         if ~isempty(strfind(SBJ_vars.ch_lab.bad{bad_ix},SBJ_vars.ch_lab.probes{probe_ix}))
-%             ch_match(probe_ix) = 1;
-%         end
-%     end
-%     if any(ch_match)
-%         toss(bad_ix) = 0;
-%     end
-% end
-% SBJ_vars.ch_lab.bad = SBJ_vars.ch_lab.bad(logical(toss));
 
 %% Process channel labels
 % Handle prefix and suffix
@@ -83,8 +71,10 @@ if isfield(SBJ_vars.ch_lab,'prefix')
     for eog_ix = 1:numel(SBJ_vars.ch_lab.eog)
         SBJ_vars.ch_lab.eog{eog_ix} = [SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.eog{eog_ix}];
     end
-    SBJ_vars.ch_lab.mic    = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.mic{1}]};
+    SBJ_vars.ch_lab.speaker    = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.speaker{1}]};
     SBJ_vars.ch_lab.photod = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.photod{1}]};
+    SBJ_vars.ch_lab.ekg = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.ekg{1}]};
+    
 end
 if isfield(SBJ_vars.ch_lab,'suffix')
     for bad_ix = 1:numel(SBJ_vars.ch_lab.bad)
@@ -99,14 +89,17 @@ if isfield(SBJ_vars.ch_lab,'suffix')
     for eog_ix = 1:numel(SBJ_vars.ch_lab.eog)
         SBJ_vars.ch_lab.eog{eog_ix} = [SBJ_vars.ch_lab.eog{eog_ix} SBJ_vars.ch_lab.suffix];
     end
-    SBJ_vars.ch_lab.mic    = {[SBJ_vars.ch_lab.mic{1} SBJ_vars.ch_lab.suffix]};
+    SBJ_vars.ch_lab.speaker    = {[SBJ_vars.ch_lab.speaker{1} SBJ_vars.ch_lab.suffix]};
     SBJ_vars.ch_lab.photod = {[SBJ_vars.ch_lab.photod{1} SBJ_vars.ch_lab.suffix]};
+    SBJ_vars.ch_lab.ekg = {[SBJ_vars.ch_lab.ekg{1} SBJ_vars.ch_lab.suffix]};
+    
 end
 % bad_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.bad);
 % eeg_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.eeg);
 % eog_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.eog);
-mic_ch_neg    = fn_ch_lab_negate(SBJ_vars.ch_lab.mic);
+speaker_ch_neg    = fn_ch_lab_negate(SBJ_vars.ch_lab.speaker);
 photod_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.photod);
+ekg_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.ekg);
 
 %% Load data
 if numel(SBJ_vars.raw_file)>1
@@ -121,7 +114,7 @@ load([SBJ_vars.dirs.preproc SBJ '_preclean' block_suffix '.mat']);
 junk_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.bad(SBJ_vars.ch_lab.bad_code==0));
 
 cfg = [];
-cfg.channel = {'all','-EDF Annotations',junk_ch_neg{:},photod_ch_neg{:},mic_ch_neg{:}};
+cfg.channel = {'all','-EDF Annotations',junk_ch_neg{:},photod_ch_neg{:},speaker_ch_neg{:},ekg_ch_neg{:}};
 data = ft_selectdata(cfg,data);
 
 % Name EEG/EOG to stick together, move to bottom of sort, add # if necessary for sorting

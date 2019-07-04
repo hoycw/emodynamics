@@ -16,7 +16,7 @@ addpath(ft_dir);
 ft_defaults
 
 %% Step 0 - Processing Variables
-% SBJ = 'IR';
+SBJ = 'IR51';
 proc_id = 'main_ft';
 eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
 
@@ -25,6 +25,75 @@ eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_va
 %  ========================================================================
 SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
+
+%% ========================================================================
+%   Step 1.1- Load iEEG data (to get channel lebels)
+%  ========================================================================
+
+b_ix = 1
+
+if strcmp(SBJ_vars.raw_file{b_ix}(end-2:end),'mat')
+    load(SBJ_vars.dirs.raw_filename{b_ix});
+else
+    cfg = [];
+    cfg.dataset = SBJ_vars.dirs.raw_filename{b_ix};
+    cfg.continuous = 'yes';
+    cfg.channel = 'all';
+    data = ft_preprocessing(cfg);
+end
+
+%% ========================================================================
+%   Fill out SBJ_vars --  channel labels 
+%  ========================================================================
+% SBJ_vars.SBJ = 'IR51';
+% SBJ_vars.raw_file = {'IR51.besa'};
+% SBJ_vars.block_name = {''};
+% SBJ_vars.low_srate  = [0];
+% 
+% SBJ_vars.ch_lab.probes     = {'ROF', 'RIN', 'RAC', 'LTH', 'SMA', 'RAM', 'RHH', 'RTH', 'LAM', 'LHH'};
+% SBJ_vars.ch_lab.probe_type = {'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg', 'seeg'};
+% SBJ_vars.ch_lab.ref_type   = {'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP', 'BP'};
+
+% Run below if necessary (for corrections)
+%SBJ_vars.ch_lab.prefix = 'POL ';    % before every channel except 'EDF Annotations'
+%SBJ_vars.ch_lab.suffix = '-Ref';    % after every channel except 'EDF Annotations'
+%SBJ_vars.ch_lab.mislabel = {{'RLT12','FPG12'},{'IH;L8','IHL8'}};
+
+% Below is only for SU patients
+% SBJ_vars.ch_lab.nlx          = [1,1,1,0,0,0,1,1,1,1,0,0];
+% SBJ_vars.ch_lab.wires        = {'mram','mrhh','mrth','mlam','mlhh','mlth'};
+% SBJ_vars.ch_lab.wire_type    = {'su','su','su','su','su','su'};
+% SBJ_vars.ch_lab.wire_ref     = {'','','','','',''};
+% SBJ_vars.ch_lab.wire_ROI     = {'all'};
+% SBJ_vars.ch_lab.nlx_suffix   = '_00XX';
+% SBJ_vars.ch_lab.nlx_nk_align = {'LAP4','LAP5'};
+% SBJ_vars.nlx_macro_inverted  = 1;
+
+% SBJ_vars.ch_lab.ref_exclude = {}; % exclude from the CAR (less used for sEEG)
+% SBJ_vars.ch_lab.bad = {};
+% SBJ_vars.ch_lab.bad_code = [];
+% SBJ_vars.ch_lab.eeg = {};
+% SBJ_vars.ch_lab.eog = {};
+% SBJ_vars.ch_lab.photod = {};
+% SBJ_vars.ch_lab.speaker    = {};
+% SBJ_vars.ch_lab.ekg    = {};
+
+%% ========================================================================
+%   Re visit after Bob
+%  ========================================================================
+block_ix = 1;
+keep_db_out = 1; 
+db_out = SBJ00b_view_preclean(SBJ,block_ix,keep_db_out);
+
+% Save out the bad_epochs from the preprocessed data
+bad_epochs = db_out.artfctdef.visual.artifact;
+tiny_bad = find(diff(bad_epochs,1,2)<10);
+if ~isempty(tiny_bad)
+    warning('Tiny bad epochs detected:\n');
+    disp(bad_epochs(tiny_bad,:));
+    bad_epochs(tiny_bad,:) = [];
+end
+save(fullfile(SBJ_vars.dirs.events,[SBJ '_bad_epochs_preclean.mat']),'-v7.3','bad_epochs');
 
 %% ========================================================================
 %   Step 2- Quick Import and Processing for Data Cleaning/Inspection
@@ -63,7 +132,7 @@ if ~isempty(tiny_bad)
     disp(bad_epochs(tiny_bad,:));
     bad_epochs(tiny_bad,:) = [];
 end
-save(strcat(SBJ_vars.dirs.events,SBJ,'_bad_epochs_preproc.mat'),'-v7.3','bad_epochs');
+save(fullfile(SBJ_vars.dirs.events,[SBJ '_bad_epochs_preproc.mat']),'-v7.3','bad_epochs');
 
 %% ========================================================================
 %   Step 5a- Manually Clean Photodiode Trace: Load & Plot

@@ -15,7 +15,7 @@ function SBJ00_cleaning_prep(SBJ,plot_psd)
 
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
 elseif exist('G:\','dir');root_dir='G:\';ft_dir=['C:\Toolbox\fieldtrip\'];
-elseif root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
+else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
