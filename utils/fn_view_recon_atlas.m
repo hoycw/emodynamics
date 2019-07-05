@@ -20,7 +20,7 @@ function fn_view_recon_atlas(SBJ, proc_id, view_space, reg_type, show_labels,...
 [root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
 
 %% Handle variables
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
 
 % Handle variable inputs

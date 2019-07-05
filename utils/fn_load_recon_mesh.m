@@ -25,21 +25,22 @@ if strcmp(view_space,'pat')
 elseif strcmp(view_space,'mni')
     if strcmp(reg_type,'v')
         if strcmp(hemi,'r')
-            load([ft_dir 'template/anatomy/surface_pial_right.mat']);
+            load(fullfile(ft_dir,'template','anatomy','surface_pial_right.mat'));
         elseif strcmp(hemi,'l')
-            load([ft_dir 'template/anatomy/surface_pial_left.mat']);
+            load(fullfile(ft_dir,'template','anatomy','surface_pial_left.mat'));
         elseif strcmp(hemi,'b')
-            load([ft_dir 'template/anatomy/surface_pial_both.mat']);
+            load(fullfile(ft_dir,'template','anatomy','surface_pial_both.mat'));
         else
             error(['Unknown hemisphere option: ' hemi]);
         end
 %         mesh.coordsys = 'mni';
     elseif strcmp(reg_type,'s')
         if strcmp(hemi,'r') || strcmp(hemi,'l')
-            mesh = ft_read_headshape([root_dir 'emodynamics/data/atlases/freesurfer/fsaverage/' hemi 'h.pial']);
+            mesh = ft_read_headshape(fullfile(root_dir,'emodynamics','data',...
+                                    'atlases','freesurfer','fsaverage',[hemi 'h.pial']));
         elseif strcmp(hemi,'b')
             error('hemisphere "b" not yet implemented for reg_type: "srf"!');
-            mesh = ft_read_headshape([ft_dir 'subjects/fsaverage/surf/' hemi 'h.pial']);
+            mesh = ft_read_headshape(fullfile(ft_dir,'subjects','fsaverage','surf',[hemi 'h.pial']));
         else
             error(['Unknown hemisphere option: ' hemi]);
         end

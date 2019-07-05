@@ -5,10 +5,11 @@ function [labels, colors] = fn_roi_label_styles(roi_id)
 %
 % einfo_col = 2 for specific ROIs, 3 for general ROIs
 
+[root_dir, ~] = fn_get_root_dir();
 % if length(cond_lab) == 1
 switch roi_id
     case 'ROI'
-        load('~/emodynamics/data/full_roi_lists.mat');
+        load(fullfile(root_dir,'emodynamics','data','full_roi_lists.mat'));
         labels = all_rois;
         % Exclude FWM, '', OUT
         labels(strmatch('FWM',labels,'exact')) = [];
@@ -48,7 +49,7 @@ switch roi_id
     case {'tissue', 'tissueC'}
         labels = {'GM','WM','CSF','OUT'};
     case 'all'
-        load('~/emodynamics/data/full_roi_lists.mat');
+        load(fullfile(root_dir,'emodynamics','data','full_roi_lists.mat'));
         labels = all_rois;
     otherwise
         error(strcat('Unknown roi_id: ',roi_id));

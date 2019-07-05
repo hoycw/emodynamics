@@ -6,7 +6,7 @@ function mri = fn_load_recon_mri(SBJ,view_space,reg_type)
 %   hemi [str] - {'l', 'r', 'b'} hemisphere to plot
 
 [root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
 
 if strcmp(view_space,'pat')
@@ -14,7 +14,7 @@ if strcmp(view_space,'pat')
     mri.coordsys = 'acpc';
 elseif strcmp(view_space,'mni')
     if strcmp(reg_type,'v')
-        mri = ft_read_mri([ft_dir 'template/anatomy/single_subj_T1_1mm.nii']);
+        mri = ft_read_mri(fullfile(ft_dir,'template','anatomy','single_subj_T1_1mm.nii'));
         mri.coordsys = 'mni';
     elseif strcmp(reg_type,'s')
         error('ortho plot with surface based registration doesnt make sense!');

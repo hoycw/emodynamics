@@ -9,13 +9,14 @@ function fn_save_elec_atlas(SBJ, proc_id, view_space, reg_type, atlas_id, reref)
 %   reref [0/1] - rereferenced positions (1) or original (0)
 
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
-addpath([root_dir 'emodynamics/scripts/']);
-addpath([root_dir 'emodynamics/scripts/utils/']);
+addpath(fullfile(root_dir,'emodynamics','scripts'));
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
 
 if strcmp(reg_type,'v') || strcmp(reg_type,'s')

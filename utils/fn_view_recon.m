@@ -13,7 +13,7 @@ function fn_view_recon(SBJ, proc_id, plot_type, view_space, reg_type,...
 [root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
 
 %% Variable Handline
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
 
 % Handle variable inputs

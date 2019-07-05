@@ -73,7 +73,7 @@ else
 end
 
 [root_dir, ~] = fn_get_root_dir();
-out_dir = [root_dir 'emodynamics/results/recons/'];
+out_dir = fullfile(root_dir,'emodynamics','results','recons',filesep);
 
 %% Load elec struct
 elec     = cell([numel(SBJs) 1]);
@@ -82,7 +82,7 @@ all_roi_labels = {};
 all_roi_colors = [];
 for sbj_ix = 1:numel(SBJs)
     SBJ = SBJs{sbj_ix};
-    SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+    SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
     eval(SBJ_vars_cmd);
     
     try
@@ -211,3 +211,4 @@ fprintf(['To reset the position of the camera light after rotating the figure,\n
     '(i.e., uncheck them within the figure), and then hit ''l'' on the keyboard\n'])
 set(h, 'windowkeypressfcn',   @cb_keyboard);
 
+end
