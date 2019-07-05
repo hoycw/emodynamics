@@ -73,7 +73,7 @@ SBJ_vars.ch_lab.bad = {...
 % Note: LHH8 drifting 
 % Note: 'LTH3', 'LTH4', 'LHH3','LHH4': Drifting, noisy, but look OK ar 2nd visit. Decided to keep.  
 % Note: 'LTH10' Slowing noise. In some time periods are off. Double check after preprocessing
-
+% Note: 'RIN10' is included in preprocessing, but it is noted as "out of brain". Don't include this channel in analysis. 
 
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
