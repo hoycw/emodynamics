@@ -100,6 +100,11 @@ SBJ_vars.bs_width    = 2;
 %--------------------------------------
 SBJ_vars.analysis_time = {{[0.0 0.0]}};
 
+% Three examples for specifying the time of analyses 
+% SBJ_vars.analysis_time = {{[55.0 1724.0]}};  <<< most simple case
+% SBJ_vars.analysis_time = {{[55.0 500] [700 1724.0]}}; << one run, two epochs (e.g., a nurse came in) 
+% SBJ_vars.analysis_time = {{[55.0 500] [700 1724.0]},{[55.0 500] [700 1724.0]}}; << for some reason, two runs
+
 %--------------------------------------
 % Trials to Reject
 %--------------------------------------

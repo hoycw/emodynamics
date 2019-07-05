@@ -82,7 +82,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         end
         % Load event data
         if ~isfield(SBJ_vars.dirs,'nlx')
-            cfg.channel = {SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker};
+            cfg.channel = [SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker];
             evnt = ft_selectdata(cfg,orig.data);
         end
     else
@@ -112,7 +112,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         
         % Load event data
         if ~isfield(SBJ_vars.dirs,'nlx')
-            cfg.channel = {SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker};
+            cfg.channel = [SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker];
             evnt = ft_preprocessing(cfg);
         end
     end
@@ -123,8 +123,9 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         data = ft_selectdata(cfg_s,data);
     end
     
-    %% Cut to analysis_time
+    %% Cut to analysis_time (for each run, and each epoch)
     if ~isempty(SBJ_vars.analysis_time{b_ix})
+        % cut each epoch
         for epoch_ix = 1:length(SBJ_vars.analysis_time{b_ix})
             epoch_len{epoch_ix} = diff(SBJ_vars.analysis_time{b_ix}{epoch_ix});
             cfg_trim = [];
@@ -145,8 +146,8 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             end
         end
         % Stitch them back together
-        data = data_pieces{1};
-        data.time{1} = data.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1);
+        data = data_pieces{1}; % << start from the first epoch
+        data.time{1} = data.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1); % making time = 0
         if ~isfield(SBJ_vars.dirs,'nlx')
             evnt = evnt_pieces{1};
             evnt.time{1} = evnt.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1);
@@ -163,7 +164,8 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             ekg = ekg_pieces{1};
             ekg.time{1} = ekg.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1);
         end
-        if length(SBJ_vars.analysis_time{b_ix})>1
+        % add next each epoch to the first epoch (within the same run)
+        if length(SBJ_vars.analysis_time{b_ix})>1 
             for epoch_ix = 2:length(SBJ_vars.analysis_time{b_ix})
                 data.trial{1} = horzcat(data.trial{1},data_pieces{epoch_ix}.trial{1});
                 data.time{1} = horzcat(data.time{1},data_pieces{epoch_ix}.time{1}-...

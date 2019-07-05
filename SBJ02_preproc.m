@@ -12,15 +12,19 @@ psd_fig_type = 'jpg';
 
 % Directories
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
-addpath(genpath([root_dir 'emodynamics/scripts/utils/']));
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
 %% Load data
 fprintf('============== Loading Data %s ==============\n',SBJ);
-eval(['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m']);
-eval(['run ' root_dir 'emodynamics/scripts/proc_vars/' proc_id '_vars.m']);
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
+eval(SBJ_vars_cmd);
+proc_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars', [proc_id '_vars.m'])];
+eval(proc_vars_cmd);
+
 
 data_all = {};
 for b_ix = 1:numel(SBJ_vars.block_name)
@@ -58,8 +62,9 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     data = ft_preprocessing(cfg,data);
     data_bp = data;
     
+    % ploting PSD channel by channel
     if strcmp(psd_bp,'yes')
-        psd_dir = strcat(SBJ_vars.dirs.preproc,'PSDs/bp/');
+        psd_dir = fullfile(SBJ_vars.dirs.preproc,'PSDs','bp',filesep);
         if ~exist(psd_dir,'dir')
             mkdir(psd_dir);
         end
@@ -83,7 +88,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         % left_out_ch stays empty, CAR is applied to all channels
         
         if strcmp(psd_reref,'yes')
-            psd_dir = strcat(SBJ_vars.dirs.preproc,'PSDs/bp.reref/');
+            psd_dir = fullfile(SBJ_vars.dirs.preproc,'PSDs','bp.reref',filesep);
             if ~exist(psd_dir,'dir')
                 mkdir(psd_dir);
             end
@@ -93,7 +98,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         end
     elseif numel(SBJ_vars.ch_lab.ref_type)==numel(SBJ_vars.ch_lab.probes)
         SBJ_vars.ch_lab.probes = sort(SBJ_vars.ch_lab.probes);  % keep alphabetical order
-        for d = 1:numel(SBJ_vars.ch_lab.probes)
+        for d = 1:numel(SBJ_vars.ch_lab.probes) % for each probe
             cfg = [];
             cfg.channel = ft_channelselection(strcat(SBJ_vars.ch_lab.probes{d},'*'), data.label);
             probe_data = ft_selectdata(cfg,data);   % Grab data from this probe to plot in PSD comparison
@@ -118,8 +123,9 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             cfg.updatesens = 'yes';
             data_reref{d} = ft_preprocessing(cfg, data);
             
+            % Plot PSD pre and post Re-referencing
             if strcmp(psd_reref,'yes')
-                psd_dir = strcat(SBJ_vars.dirs.preproc,'PSDs/bp.reref/');
+                psd_dir = fullfile(SBJ_vars.dirs.preproc,'PSDs','bp.reref',filesep);
                 if ~exist(psd_dir,'dir')
                     mkdir(psd_dir);
                 end
@@ -154,32 +160,21 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     %% Filter out line noise
     fprintf('============== Filtering Line Noise %s via %s ==============\n',SBJ,proc.notch_type);
     
-    if strcmp(proc.notch_type,'dft')
-        cfg           = [];
-        cfg.dftfilter = 'yes'; % line noise removal using discrete fourier transform
-        cfg.dftfreq   = SBJ_vars.notch_freqs;
-        cfg.dftfreq(cfg.dftfreq > data.fsample/2) = [];
-        data = ft_preprocessing(cfg,data);
-    elseif strcmp(proc.notch_type,'bandstop')
-        % Calculate frequency limits
-        bs_freq_lim = NaN([length(SBJ_vars.notch_freqs) 2]);
-        for f_ix = 1:length(SBJ_vars.notch_freqs)
-            bs_freq_lim(f_ix,:) = fn_freq_lim_from_CFBW(SBJ_vars.notch_freqs(f_ix),SBJ_vars.bs_width);
-        end
-        bs_freq_lim(bs_freq_lim(:,2) > data.fsample/2, :) = [];
-        cfg          = [];
-        cfg.bsfilter = 'yes';
-        cfg.bsfreq   = bs_freq_lim;
-        data = ft_preprocessing(cfg,data);
-    elseif strcmp(proc.notch_type,'cleanline')
-        error('why use cleanline? never tested...');
-        data = fn_cleanline(data,SBJ_vars.notch_freqs);
-    else
-        error('ERROR: proc.notch_type type not in [dft, bandstop, cleanline]');
+    % 'bandstop' % method for nothc filtering out line noise
+    % Calculate frequency limits
+    bs_freq_lim = NaN([length(SBJ_vars.notch_freqs) 2]);
+    for f_ix = 1:length(SBJ_vars.notch_freqs)
+        bs_freq_lim(f_ix,:) = fn_freq_lim_from_CFBW(SBJ_vars.notch_freqs(f_ix),SBJ_vars.bs_width);
     end
-    
+    bs_freq_lim(bs_freq_lim(:,2) > data.fsample/2, :) = [];
+    cfg          = [];
+    cfg.bsfilter = 'yes';
+    cfg.bsfreq   = bs_freq_lim;
+    data = ft_preprocessing(cfg,data);
+  
+    % Plot PSD
     if strcmp(psd_line,'yes')
-        psd_dir = strcat(SBJ_vars.dirs.preproc,'PSDs/',proc_id,'/');
+        psd_dir = fullfile(SBJ_vars.dirs.preproc,'PSDs',proc_id,filesep);
         if ~exist(psd_dir,'dir')
             mkdir(psd_dir);
         end

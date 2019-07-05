@@ -42,6 +42,10 @@ else
     data = ft_preprocessing(cfg);
 end
 
+% To know the time of analyses (get task onset and offset time from photodiode and speaker)
+load(fullfile('G:','emodynamics','scripts','utils','cfg_plot.mat'))
+ft_databrowser(cfg_plot,data)
+
 %% ========================================================================
 %   Fill out SBJ_vars --  channel labels 
 %  ========================================================================
@@ -78,12 +82,22 @@ end
 % SBJ_vars.ch_lab.speaker    = {};
 % SBJ_vars.ch_lab.ekg    = {};
 
+% SBJ_vars.analysis_time = {{[onset_time offset_time]}};
+
+
+%% ========================================================================
+%   Step 2- Quick Import and Processing for Data Cleaning/Inspection
+%  ========================================================================
+SBJ00_cleaning_prep(SBJ,proc.plot_psd);
+
+
 %% ========================================================================
 %   Re visit after Bob
 %  ========================================================================
 block_ix = 1;
 keep_db_out = 1; 
-db_out = SBJ00b_view_preclean(SBJ,block_ix,keep_db_out);
+db_out = SBJ00b_view_preclean(SBJ,block_ix,keep_db_out,'reorder','','label_size',6);%,'ylim',[-100 100]
+%db_out = SBJ00b_view_preclean(SBJ,block_ix,keep_db_out);
 
 % Save out the bad_epochs from the preprocessed data
 bad_epochs = db_out.artfctdef.visual.artifact;
@@ -95,10 +109,6 @@ if ~isempty(tiny_bad)
 end
 save(fullfile(SBJ_vars.dirs.events,[SBJ '_bad_epochs_preclean.mat']),'-v7.3','bad_epochs');
 
-%% ========================================================================
-%   Step 2- Quick Import and Processing for Data Cleaning/Inspection
-%  ========================================================================
-SBJ00_cleaning_prep(SBJ,proc.plot_psd);
 
 %% ========================================================================
 %   Step 3- Import Data, Resample, and Save Individual Data Types

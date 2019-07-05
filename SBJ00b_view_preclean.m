@@ -29,10 +29,12 @@ if ~isempty(varargin)
             else
                 error('unexpected bad_epochs input');
             end
-        elseif strcmp(varargin{v},'reorder') && iscell(varargin{v+1})
+        elseif strcmp(varargin{v},'reorder')
             new_lab_order = varargin{v+1};
         elseif strcmp(varargin{v},'ylim') && numel(varargin{v+1})==2
             y_lim = varargin{v+1};
+        elseif strcmp(varargin{v},'label_size') && numel(varargin{v+1})==1
+            label_size = varargin{v+1};            
         else
             error(['Unknown varargin ' num2str(v) ': ' varargin{v}]);
         end
@@ -145,9 +147,15 @@ if exist('bad_epochs','var')
     end
     cfg_plot.artfctdef.visual.artifact = bad_epochs;
 end
+
 if exist('y_lim','var')
     cfg_plot.ylim = y_lim;
 end
+
+if exist('label_size','var')
+     cfg_plot.fontsize = label_size;
+end
+
 
 % Set the colors
 cfg_plot.channelcolormap = colormap;

@@ -65,18 +65,19 @@ SBJ_vars.ch_lab.ROI        = {'all'};
 %SBJ_vars.ch_lab.suffix = '-Ref';    % after every channel except 'EDF Annotations'
 %SBJ_vars.ch_lab.mislabel = {{'RLT12','FPG12'},{'IH;L8','IHL8'}};
 
-SBJ_vars.ch_lab.ref_exclude = {}; % exclude from the CAR (less used for sEEG)
+SBJ_vars.ch_lab.ref_exclude = {'LHH8', 'LTH10'}; % exclude from the CAR (less used for sEEG)
 SBJ_vars.ch_lab.bad = {...
-    'LTH3', 'LTH4', 'LHH3','LHH4',... % Drifting, noisy
     'RHH1','RHH2','RHH3','RTH1','RTH2','RTH3','RAM1','RAM2','RAM3','RAM4',... % Epileptic
-    'LTH10',...% Slowing noise
     'xref', 'Gnd', 'E', 'DC01', 'DC04','*-1', '*-2'...
     };
 % Note: LHH8 drifting 
+% Note: 'LTH3', 'LTH4', 'LHH3','LHH4': Drifting, noisy, but look OK ar 2nd visit. Decided to keep.  
+% Note: 'LTH10' Slowing noise. In some time periods are off. Double check after preprocessing
+
 
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
-SBJ_vars.ch_lab.bad_code = [2,2,2,2,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0];
+SBJ_vars.ch_lab.bad_code = [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0];
 if numel(SBJ_vars.ch_lab.bad)~=numel(SBJ_vars.ch_lab.bad_code);error('bad ~= bad_code');end
 SBJ_vars.ch_lab.eeg = {'FZ','CZ','OZ','C3','C4'};
 SBJ_vars.ch_lab.eog = {'LUE','LLE','RUE','RLE'};
@@ -92,7 +93,7 @@ SBJ_vars.bs_width    = 2;
 %--------------------------------------
 % Time Parameters
 %--------------------------------------
-SBJ_vars.analysis_time = {{[0.0 0.0]}};
+SBJ_vars.analysis_time = {{[55.0 1724.0]}};
 
 %--------------------------------------
 % Trials to Reject
