@@ -6,7 +6,7 @@ function [elec] = fn_load_elec_orig(SBJ,view_space,reg_type)
 %   reg_type [str] - {'v','s',''};
 
 [root_dir, ~] = fn_get_root_dir();
-eval(['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m']);
+eval(['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])]);
 
 if strcmp(reg_type,'v') || strcmp(reg_type,'s')
     reg_suffix = ['_' reg_type];    % MNI space

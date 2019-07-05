@@ -6,7 +6,7 @@ fprintf('Using atlas: %s\n',atlas_id);
 
 if ~isempty(SBJ)
     % Individual SBJ atlases
-    SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+    SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])];
     eval(SBJ_vars_cmd);
     
     if strcmp(atlas_id,'DK')
@@ -19,12 +19,12 @@ if ~isempty(SBJ)
         error(['altas: ' atlas_id ' not compatible with specific SBJ']);
     end
 else
-    fscolin_dir = [root_dir 'emodynamics/data/atlases/freesurfer/fscolin/'];
+    fscolin_dir = fullfile(root_dir,'emodynamics','data','atlases','freesurfer','fscolin');
     if strcmp(atlas_id,'DK')
-        atlas      = ft_read_atlas([fscolin_dir 'fscolin_aparc+aseg.mgz']); % Desikan-Killiany (+volumetric)
+        atlas      = ft_read_atlas([fscolin_dir filesep 'fscolin_aparc+aseg.mgz']); % Desikan-Killiany (+volumetric)
         atlas.coordsys = 'acpc';
     elseif strcmp(atlas_id,'Dx')
-        atlas      = ft_read_atlas([fscolin_dir 'fscolin_aparc.a2009s+aseg.mgz']); % Destrieux (+volumetric)
+        atlas      = ft_read_atlas([fscolin_dir filesep 'fscolin_aparc.a2009s+aseg.mgz']); % Destrieux (+volumetric)
         atlas.coordsys = 'acpc';
 %     elseif strcmp(atlas_id,'Yeo7')
 %         atlas = fn_read_atlas(atlas_id);

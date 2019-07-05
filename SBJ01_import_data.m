@@ -3,15 +3,16 @@
 function SBJ01_import_data(SBJ,proc_id)
 
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
-addpath([root_dir 'emodynamics/scripts/utils/']);
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
 %% Load and preprocess the data
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
-proc_vars_cmd = ['run ' root_dir 'emodynamics/scripts/proc_vars/' proc_id '_vars.m'];
+proc_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars', [proc_id '_vars.m'])];
 eval(proc_vars_cmd);
 
 %% Process channel labels
@@ -25,7 +26,9 @@ if isfield(SBJ_vars.ch_lab,'prefix')
     for eog_ix = 1:numel(SBJ_vars.ch_lab.eog)
         SBJ_vars.ch_lab.eog{eog_ix} = [SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.eog{eog_ix}];
     end
-    SBJ_vars.ch_lab.photod = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.photod{1}]};
+    SBJ_vars.ch_lab.ekg     = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.ekg{1}]};
+    SBJ_vars.ch_lab.photod  = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.photod{1}]};
+    SBJ_vars.ch_lab.speaker = {[SBJ_vars.ch_lab.prefix SBJ_vars.ch_lab.speaker{1}]};
 end
 if isfield(SBJ_vars.ch_lab,'suffix')
     for bad_ix = 1:numel(SBJ_vars.ch_lab.bad)
@@ -37,12 +40,16 @@ if isfield(SBJ_vars.ch_lab,'suffix')
     for eog_ix = 1:numel(SBJ_vars.ch_lab.eog)
         SBJ_vars.ch_lab.eog{eog_ix} = [SBJ_vars.ch_lab.eog{eog_ix} SBJ_vars.ch_lab.suffix];
     end
-    SBJ_vars.ch_lab.photod = {[SBJ_vars.ch_lab.photod{1} SBJ_vars.ch_lab.suffix]};
+    SBJ_vars.ch_lab.ekg     = {[SBJ_vars.ch_lab.ekg{1} SBJ_vars.ch_lab.suffix]};
+    SBJ_vars.ch_lab.photod  = {[SBJ_vars.ch_lab.photod{1} SBJ_vars.ch_lab.suffix]};
+    SBJ_vars.ch_lab.speaker = {[SBJ_vars.ch_lab.speaker{1} SBJ_vars.ch_lab.suffix]};
 end
 bad_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.bad);
 eeg_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.eeg);
 eog_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.eog);
+ekg_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.ekg);
 photod_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.photod);
+speaker_ch_neg = fn_ch_lab_negate(SBJ_vars.ch_lab.speaker);
 
 for b_ix = 1:numel(SBJ_vars.block_name)
     %% Load Data
@@ -55,7 +62,8 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         orig = load(SBJ_vars.dirs.raw_filename{b_ix});
         % Load Neural Data
         cfg = [];
-        cfg.channel = {'all',bad_ch_neg{:},eeg_ch_neg{:},eog_ch_neg{:},photod_ch_neg{:}};
+        cfg.channel = {'all',bad_ch_neg{:},eeg_ch_neg{:},eog_ch_neg{:},...
+                        ekg_ch_neg{:},photod_ch_neg{:},speaker_ch_neg{:}};
         data = ft_selectdata(cfg,orig.data);
         % EEG data
         if ~isempty(SBJ_vars.ch_lab.eeg)
@@ -67,9 +75,14 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             cfg.channel = SBJ_vars.ch_lab.eog;
             eog = ft_selectdata(cfg,orig.data);
         end
+        % EKG data
+        if ~isempty(SBJ_vars.ch_lab.ekg)
+            cfg.channel = SBJ_vars.ch_lab.ekg;
+            ekg = ft_selectdata(cfg,orig.data);
+        end
         % Load event data
         if ~isfield(SBJ_vars.dirs,'nlx')
-            cfg.channel = SBJ_vars.ch_lab.photod;
+            cfg.channel = {SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker};
             evnt = ft_selectdata(cfg,orig.data);
         end
     else
@@ -77,7 +90,8 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         cfg            = [];
         cfg.dataset    = SBJ_vars.dirs.raw_filename{b_ix};
         cfg.continuous = 'yes';
-        cfg.channel    = {'all',bad_ch_neg{:},eeg_ch_neg{:},eog_ch_neg{:},photod_ch_neg{:}};
+        cfg.channel    = {'all',bad_ch_neg{:},eeg_ch_neg{:},eog_ch_neg{:},...
+                            ekg_ch_neg{:},photod_ch_neg{:},speaker_ch_neg{:}};
         data = ft_preprocessing(cfg);
         
         % Load EEG data
@@ -90,10 +104,15 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             cfg.channel = SBJ_vars.ch_lab.eog;
             eog = ft_preprocessing(cfg);
         end
+        % Load EKG data
+        if ~isempty(SBJ_vars.ch_lab.ekg)
+            cfg.channel = SBJ_vars.ch_lab.ekg;
+            ekg = ft_preprocessing(cfg);
+        end
         
         % Load event data
         if ~isfield(SBJ_vars.dirs,'nlx')
-            cfg.channel = SBJ_vars.ch_lab.photod;
+            cfg.channel = {SBJ_vars.ch_lab.photod, SBJ_vars.ch_lab.speaker};
             evnt = ft_preprocessing(cfg);
         end
     end
@@ -121,6 +140,9 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             if ~isempty(SBJ_vars.ch_lab.eog)
                 eog_pieces{epoch_ix}  = ft_selectdata(cfg_trim, eog);
             end
+            if ~isempty(SBJ_vars.ch_lab.ekg)
+                ekg_pieces{epoch_ix}  = ft_selectdata(cfg_trim, ekg);
+            end
         end
         % Stitch them back together
         data = data_pieces{1};
@@ -136,6 +158,10 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         if ~isempty(SBJ_vars.ch_lab.eog)
             eog = eog_pieces{1};
             eog.time{1} = eog.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1);
+        end
+        if ~isempty(SBJ_vars.ch_lab.ekg)
+            ekg = ekg_pieces{1};
+            ekg.time{1} = ekg.time{1}-SBJ_vars.analysis_time{b_ix}{1}(1);
         end
         if length(SBJ_vars.analysis_time{b_ix})>1
             for epoch_ix = 2:length(SBJ_vars.analysis_time{b_ix})
@@ -159,6 +185,11 @@ for b_ix = 1:numel(SBJ_vars.block_name)
                     eog.time{1} = horzcat(eog.time{1},eog_pieces{epoch_ix}.time{1}-...
                         SBJ_vars.analysis_time{b_ix}{epoch_ix}(1)+eog.time{1}(end)+eog.time{1}(2));
                 end
+                if ~isempty(SBJ_vars.ch_lab.ekg)
+                    ekg.trial{1} = horzcat(ekg.trial{1},ekg_pieces{epoch_ix}.trial{1});
+                    ekg.time{1} = horzcat(ekg.time{1},ekg_pieces{epoch_ix}.time{1}-...
+                        SBJ_vars.analysis_time{b_ix}{epoch_ix}(1)+ekg.time{1}(end)+ekg.time{1}(2));
+                end
             end
         end
     end
@@ -174,6 +205,9 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         end
         if ~isempty(SBJ_vars.ch_lab.eog)
             eog = ft_resampledata(cfg, eog);
+        end
+        if ~isempty(SBJ_vars.ch_lab.ekg)
+            ekg = ft_resampledata(cfg, ekg);
         end
     end
     
@@ -207,6 +241,16 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             end
         end
     end
+    if ~isempty(SBJ_vars.ch_lab.ekg)
+        for ekg_ix = 1:numel(ekg.label)
+            if isfield(SBJ_vars.ch_lab,'prefix')
+                ekg.label{ekg_ix} = strrep(ekg.label{ekg_ix},SBJ_vars.ch_lab.prefix,'');
+            end
+            if isfield(SBJ_vars.ch_lab,'suffix')
+                ekg.label{ekg_ix} = strrep(ekg.label{ekg_ix},SBJ_vars.ch_lab.suffix,'');
+            end
+        end
+    end
     if ~isfield(SBJ_vars.dirs,'nlx')
         if isfield(SBJ_vars.ch_lab,'prefix')
             evnt.label{1} = strrep(evnt.label{1},SBJ_vars.ch_lab.prefix,'');
@@ -225,6 +269,8 @@ for b_ix = 1:numel(SBJ_vars.block_name)
                 eeg.label(strcmp(eeg.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1))) = SBJ_vars.ch_lab.mislabel{ch_ix}(2);
             elseif any(strcmp(eog.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1)))
                 eog.label(strcmp(eog.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1))) = SBJ_vars.ch_lab.mislabel{ch_ix}(2);
+            elseif any(strcmp(ekg.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1)))
+                ekg.label(strcmp(ekg.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1))) = SBJ_vars.ch_lab.mislabel{ch_ix}(2);
             else
                 error(['Could not find mislabeled channel: ' SBJ_vars.ch_lab.mislabel{ch_ix}(1)]);
             end
@@ -256,26 +302,38 @@ for b_ix = 1:numel(SBJ_vars.block_name)
         end
         eog = fn_reorder_data(eog, sort(eog.label));
     end
+    if ~isempty(SBJ_vars.ch_lab.ekg)
+        for ch_ix = 1:numel(SBJ_vars.ch_lab.bad)
+            if any(strcmp(SBJ_vars.ch_lab.bad{ch_ix},ekg.label))
+                error(['ERROR: bad channel still in imported data after re-labeling: ' SBJ_vars.ch_lab.bad{ch_ix}]);
+            end
+        end
+        ekg = fn_reorder_data(ekg, sort(ekg.label));
+    end
     
     %% Save data
-    nrl_out_fname = strcat(SBJ_vars.dirs.import,SBJ,'_',num2str(data.fsample),'hz',block_suffix,'.mat');
+    nrl_out_fname = fullfile(SBJ_vars.dirs.import,[SBJ '_' num2str(data.fsample) 'hz' block_suffix '.mat']);
     save(nrl_out_fname, '-v7.3', 'data');
     
     if ~isempty(SBJ_vars.ch_lab.eeg)
-        eeg_out_fname = strcat(SBJ_vars.dirs.import,SBJ,'_eeg_',num2str(eeg.fsample),'hz',block_suffix,'.mat');
+        eeg_out_fname = fullfile(SBJ_vars.dirs.import,[SBJ '_eeg_' num2str(eeg.fsample) 'hz' block_suffix '.mat']);
         save(eeg_out_fname, '-v7.3', 'eeg');
     end
     if ~isempty(SBJ_vars.ch_lab.eog)
-        eog_out_fname = strcat(SBJ_vars.dirs.import,SBJ,'_eog_',num2str(eog.fsample),'hz',block_suffix,'.mat');
+        eog_out_fname = fullfile(SBJ_vars.dirs.import,[SBJ '_eog_' num2str(eog.fsample) 'hz' block_suffix '.mat']);
         save(eog_out_fname, '-v7.3', 'eog');
+    end
+    if ~isempty(SBJ_vars.ch_lab.ekg)
+        ekg_out_fname = fullfile(SBJ_vars.dirs.import,[SBJ '_ekg_' num2str(ekg.fsample) 'hz' block_suffix '.mat']);
+        save(ekg_out_fname, '-v7.3', 'ekg');
     end
     
     if ~isfield(SBJ_vars.dirs,'nlx')
-        evnt_out_fname = strcat(SBJ_vars.dirs.import,SBJ,'_evnt',block_suffix,'.mat');
+        evnt_out_fname = fullfile(SBJ_vars.dirs.import,[SBJ '_evnt' block_suffix '.mat']);
         save(evnt_out_fname, '-v7.3', 'evnt');
     end
     
-    clear data evnt eeg eog
+    clear data evnt eeg eog ekg
 end
 
 end

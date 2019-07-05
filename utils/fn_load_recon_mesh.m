@@ -6,18 +6,18 @@ function mesh = fn_load_recon_mesh(SBJ,view_space,reg_type,hemi)
 %   reg_type [str] - {'v', 's'} choose volume-based or surface-based registration
 %   hemi [str] - {'l', 'r', 'b'} hemisphere to plot
 
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
+[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip' filesep];
 if ~isempty(SBJ)
-    SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+    SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars',[SBJ '_vars.m'])];
     eval(SBJ_vars_cmd);
 end
 
 if strcmp(view_space,'pat')
     if strcmp(hemi,'r') || strcmp(hemi,'l')
-        mesh = ft_read_headshape([SBJ_vars.dirs.recon 'Surfaces/' SBJ '_cortex_' hemi 'h.mat']);
+        mesh = ft_read_headshape([SBJ_vars.dirs.recon 'Surfaces' filesep SBJ '_cortex_' hemi 'h.mat']);
     elseif strcmp(hemi,'b')
-        mesh = ft_read_headshape({[SBJ_vars.dirs.recon 'Surfaces/' SBJ '_cortex_rh.mat'],...
-                                    [SBJ_vars.dirs.recon 'Surfaces/' SBJ '_cortex_lh.mat']});
+        mesh = ft_read_headshape({[SBJ_vars.dirs.recon 'Surfaces' filesep SBJ '_cortex_rh.mat'],...
+                                    [SBJ_vars.dirs.recon 'Surfaces' filesep SBJ '_cortex_lh.mat']});
     else
         error(['Unknown hemisphere selected: ' hemi]);
     end
