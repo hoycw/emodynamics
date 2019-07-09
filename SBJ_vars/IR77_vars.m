@@ -55,7 +55,8 @@ SBJ_vars.recon.fs_Dx      = [SBJ_vars.dirs.recon 'Scans' fullfile(filesep) SBJ_v
 %--------------------------------------
 % Channel Selection
 %--------------------------------------
-SBJ_vars.ch_lab.probes     = {'RAM','RHH','RTH','RAC','RPC','ROF','RIN','LAM','LHH','LTH','LAC','LSM','LPC','LOF','LIN','2IN','LSP'}; % e.g., 'LAM', 'RAM', 'LTH', etc.
+% SBJ_vars.ch_lab.probes     = {'RAM','RHH','RTH','RAC','RPC','ROF','RIN','LAM','LHH','LTH','LAC','LSM','LPC','LOF','LIN','2IN','LSP'}; % e.g., 'LAM', 'RAM', 'LTH', etc.
+SBJ_vars.ch_lab.probes     = {'RAM','RHH','RTH','RAC','RPC','ROF','RIN','LAM','LHH','LTH','LAC','LSM','LPC','LOF','LIN','PIN','LSP'}; % e.g., 'LAM', 'RAM', 'LTH', etc.
 SBJ_vars.ch_lab.probe_type = {'seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg','seeg'}; % 'seeg' or 'ecog'
 SBJ_vars.ch_lab.ref_type   = {'BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP','BP'}; % either 'BP' or 'CAR or 'CARall'
 if ~all(numel(SBJ_vars.ch_lab.probes)==[numel(SBJ_vars.ch_lab.probe_type) numel(SBJ_vars.ch_lab.ref_type)]); error('probes ~= type+ref');end; % this compare the number of channels of the above 3 lines
@@ -63,7 +64,7 @@ SBJ_vars.ch_lab.ROI        = {'all'};
 
 %SBJ_vars.ch_lab.prefix = 'POL ';    % before every channel except 'EDF Annotations'
 %SBJ_vars.ch_lab.suffix = '-Ref';    % after every channel except 'EDF Annotations'
-SBJ_vars.ch_lab.mislabel = {{'2IN1','LIS1'},{'2IN2','LIS2'},{'2IN3','LIS3'},{'2IN4','LIS4'},{'2IN5','LIS5'},{'2IN6','LIS6'},{'2IN7','LIS7'},{'2IN8','LIS8'},{'2IN9','LIS9'},{'2IN10','LIS10'}};
+SBJ_vars.ch_lab.mislabel = {{'2IN1','PIN1'},{'2IN2','PIN2'},{'2IN3','PIN3'},{'2IN4','PIN4'},{'2IN5','PIN5'},{'2IN6','PIN6'},{'2IN7','PIN7'},{'2IN8','PIN8'},{'2IN9','PIN9'},{'2IN10','PIN10'}};
 
 % Below is only for SU patients
 % SBJ_vars.ch_lab.nlx          = [1,1,1,0,0,0,1,1,1,1,0,0];
