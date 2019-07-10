@@ -99,3 +99,17 @@ SBJ_vars.analysis_time = {{[55.0 1724.0]}};
 % Trials to Reject
 %--------------------------------------
 % SBJ_vars.trial_reject_n = [];
+
+%--------------------------------------
+% Film Trials Numbers
+%--------------------------------------
+trial_info.video_id = [1,2,3,4,5,6,7,8]
+% 1. Disgust: Roaches (154000 ms)
+% 2. Happy: Modern Times (154000 ms)
+% 3. Fear: Witness (154000 ms)
+% 4. Neutral: Sticks (154000 ms)
+% 5. Fear: Cujo (154000 ms)
+% 6. Disgust: Poop Lady (154000 ms)
+% 7. Neutral: ColorBars (154000 ms)
+% 8. Happy: Lucy (159000 ms)
+
