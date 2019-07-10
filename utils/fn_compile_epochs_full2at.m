@@ -27,7 +27,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     else
         block_suffix = SBJ_vars.block_name{b_ix};   % should just be ''
     end
-    bad_preclean = load(fullfile(SBJ_vars.dirs.events,[SBJ '_bob_bad_epochs_preclean' block_suffix '.mat']));
+    bad_preclean = load(fullfile(SBJ_vars.dirs.events,[SBJ '_bad_epochs_preclean' block_suffix '.mat']));
     % Adjust to analysis_time
     if ~isempty(bad_preclean.bad_epochs)
         at_epochs{b_ix} = fn_convert_epochs_full2at(bad_preclean.bad_epochs,SBJ_vars.analysis_time{b_ix},...
