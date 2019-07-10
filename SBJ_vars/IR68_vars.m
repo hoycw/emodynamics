@@ -82,16 +82,16 @@ SBJ_vars.ch_lab.bad = {...
     'AIN5','LPC6','LPC7',...% noisy
     'LAC10',...% added for HF noise, LAC9-10 is flat and terrible
     'AIN8','AIN9','AIN10',...% out of brainm also 'LTH9','LTH10','LHH10','LAM10' but listed above too
-    'GRND','XREF','EKG','DC02','DC03','DC04'...% not real data
+    'GRND','XREF','DC03','DC04'...% not real data
     };
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
-SBJ_vars.ch_lab.bad_code = [1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 0 0 0 0 0 0];
+SBJ_vars.ch_lab.bad_code = [1 1 1 1 1 1 1 1 1 1 2 2 2 2 3 3 3 0 0 0 0];
 if numel(SBJ_vars.ch_lab.bad)~=numel(SBJ_vars.ch_lab.bad_code);error('bad ~= bad_code');end
 SBJ_vars.ch_lab.eeg = {'FZ','CZ','OZ','C3','C4'};
 SBJ_vars.ch_lab.eog = {'LUE','LLE','RUE','RLE'};
 SBJ_vars.ch_lab.photod = {'DC01'}; % From experimenter notes (e.g., when noted as '1', means 'DC01') 
-SBJ_vars.ch_lab.speaker    = {}; % From experimenter notes 
+SBJ_vars.ch_lab.speaker    = {'DC02'}; % From experimenter notes 
 SBJ_vars.ch_lab.ekg    = {'EKG'}; 
 
 %--------------------------------------
@@ -103,7 +103,7 @@ SBJ_vars.bs_width    = 2;
 %--------------------------------------
 % Time Parameters
 %--------------------------------------
-SBJ_vars.analysis_time = {{[0.0 0.0]}};
+SBJ_vars.analysis_time = {{[30.0 1886.0]}};
 
 % Three examples for specifying the time of analyses 
 % SBJ_vars.analysis_time = {{[55.0 1724.0]}};  <<< most simple case
