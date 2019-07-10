@@ -16,7 +16,7 @@ addpath(ft_dir);
 ft_defaults
 
 %% Step 0 - Processing Variables
-SBJ = 'IR68';
+SBJ = 'IR51';
 proc_id = 'main_ft';
 eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
 
