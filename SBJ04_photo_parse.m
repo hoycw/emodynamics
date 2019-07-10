@@ -35,7 +35,7 @@ data_photo = data_photo - min(data_photo);
 
 % Read photodiode data
 fprintf('\tReading photodiode data\n');
-min_event_length = 120 * evnt.fsample;    %trial must be at least 0.8 sec (actually ~1.5s?)
+min_event_length = 5 * evnt.fsample;    %trial must be at least 0.8 sec (actually ~1.5s?)
 [evnt_on, evnt_off, data_shades] = read_photodiode(data_photo, min_event_length, 2);  %2 different shades (bsln, evnt)
 if save_it
     fig_fname = [SBJ_vars.dirs.events SBJ '_photo_segmentation.fig'];
@@ -46,6 +46,7 @@ clear data_photo;
 % Diff to get edges which correspond to onsets and offsets
 data_shades = [diff(data_shades) 0]; % Add a point because diff removes one
 video_onsets = find(data_shades>0)'; % 1 to 2 is video onset. Transpose to make column vector
+video_offsets = find(data_shades<0)'; % 1 to 2 is video onset. Transpose to make column vector
 fprintf('\t\tFound %d trials in photodiode channel\n', length(video_onsets));
 
 % Plot photodiode event durations to check consistency
@@ -73,13 +74,13 @@ end
 
 % Parse log file
 % file_contents = textscan(log_h, '%f %d', 'Delimiter', ',', 'MultipleDelimsAsOne', 1);
-% trial_info.video_id = file_contents{2};
+% trial_info.video_id = file_contents{2}; <<<<<< Will update this one for films played
 % trial_info.log_onset_time = file_contents{1};
 % fprintf('\t\tFound %d trials in log file\n', length(trial_info.video_id));
 
 % Remove trials to ignore
-trial_info.video_id(ignore_trials) = [];
-trial_info.log_onset_time(ignore_trials) = [];
+% trial_info.video_id(ignore_trials) = [];
+% trial_info.log_onset_time(ignore_trials) = [];
 trial_info.ignore_trials = ignore_trials;
 fprintf('\t\tIgnoring %d trials\n', length(ignore_trials));
 
@@ -99,17 +100,9 @@ if (length(trial_info.video_id) ~= length(video_onsets))
     error('\nNumber of trials in log is different from number of trials found in event channel\n\n');
 end
 
-% % Compare onset differences between photodiode and log times
-% log_times = trial_info.log_onset_time-trial_info.log_onset_time(1);
-% video_times = (video_onsets-video_onsets(1))/evnt.fsample;
-% donsets = log_times-video_times;
-% dphoto = diff(video_onsets/evnt.fsample);
-% dlog   = diff(trial_info.log_onset_time);
-% ddif   = dlog-dphoto;
-% fprintf('\tMax difference in photodiode - log event onsets = %f\n',max(abs(donsets)));
-% fprintf('\tMax difference in photodiode - log event durations = %f\n',max(abs(ddif)));
 
 trial_info.video_onsets = video_onsets;
+trial_info.video_offsets = video_offsets;
 
 %% Save results
 if save_it
@@ -133,6 +126,9 @@ if plot_it
     for video_n = 1:length(trial_info.video_onsets)
         plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/evnt.fsample,[1.30 1.40],'b','LineWidth',2);
         plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/evnt.fsample,[-0.35 0.35],'b','LineWidth',2);
+        plot([trial_info.video_offsets(video_n) trial_info.video_offsets(video_n)]/evnt.fsample,[1.30 1.40],'r','LineWidth',2);
+        plot([trial_info.video_offsets(video_n) trial_info.video_offsets(video_n)]/evnt.fsample,[-0.35 0.35],'r','LineWidth',2);        
+        
     end
     
     if save_it
@@ -140,24 +136,7 @@ if plot_it
         saveas(gcf,fig_fname);
     end
     
-    % Plot difference between log and photodiode
-    figure; hold on;
-    subplot(2,1,1);
-    plot(donsets);
-    ylabel('Log-Photo Onsets');
-    xlabel('Video');
-    title(['max(abs(donsets)) = ' num2str(max(abs(donsets)))]);
-    
-    subplot(2,1,2);
-    plot(ddif);
-    ylabel('Log-Photo Durations');
-    xlabel('Video');
-    title(['max(abs(diff(durations))) = ' num2str(max(abs(ddif)))]);
-
-    if save_it
-        fig_fname = [SBJ_vars.dirs.events SBJ '_log_photo_QA.png'];
-        saveas(gcf,fig_fname);
-    end
+ 
 end
 
 end
