@@ -21,13 +21,13 @@ else
 end
 
 evnt_filename = [SBJ_vars.dirs.preproc SBJ '_evnt_clean',block_suffix,'.mat'];
-output_filename = [SBJ_vars.dirs.events SBJ '_trial_info_auto',block_suffix,'.mat'];
+output_filename = [SBJ_vars.dirs.events SBJ '_trial_info',block_suffix,'.mat'];
 
 %% Determine event onset sample points
 % Load input data
 fprintf('Loading %s\n',evnt_filename);
 load(evnt_filename);
-data_photo = evnt.trial{1};
+data_photo = evnt.trial{1}(photo_ix,:);
 data_photo_orig = data_photo;
 
 % Bring data down to zero
@@ -35,7 +35,7 @@ data_photo = data_photo - min(data_photo);
 
 % Read photodiode data
 fprintf('\tReading photodiode data\n');
-min_event_length = 0.8 * evnt.fsample;    %trial must be at least 0.8 sec (actually ~1.5s?)
+min_event_length = 120 * evnt.fsample;    %trial must be at least 0.8 sec (actually ~1.5s?)
 [evnt_on, evnt_off, data_shades] = read_photodiode(data_photo, min_event_length, 2);  %2 different shades (bsln, evnt)
 if save_it
     fig_fname = [SBJ_vars.dirs.events SBJ '_photo_segmentation.fig'];

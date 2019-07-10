@@ -159,47 +159,51 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     load(evnt_fname);
     
     % Plot event channels
-    plot(evnt.time{1}, evnt.trial{1});
+    photo_ix = find(strcmp(SBJ_vars.ch_lab.photod,evnt.label));
+    plot(evnt.time{1}, evnt.trial{1}(photo_ix,:));
+    
+    % Add videos that are in log but not in the photodiode
+    %   (empty if all videos are in log and photodiode)
+    ignore_trials = [];
     
     %% ========================================================================
     %   Step 5b- Manually Clean Photodiode Trace: Mark Sections to Correct
     %  ========================================================================
     % Create correction times and values in a separate file in ~/emodynamics/scripts/SBJ_evnt_clean/
-    SBJ_evnt_clean_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_evnt_clean',[SBJ '_evnt_clean_params' block_suffix '.m'])];
-    eval(SBJ_evnt_clean_cmd);
+%     SBJ_evnt_clean_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_evnt_clean',[SBJ '_evnt_clean_params' block_suffix '.m'])];
+%     eval(SBJ_evnt_clean_cmd);
     
     %% ========================================================================
     %   Step 5c- Manually Clean Photodiode Trace: Apply Corrections
     %  ========================================================================
-    photod_ix = find(strcmp(SBJ_vars.ch_lab.photod,evnt.label));
-    % Correct baseline shift
-    for shift_ix = 1:length(bsln_shift_times)
-        epoch_idx = floor(bsln_shift_times{shift_ix}(1)*evnt.fsample):floor(bsln_shift_times{shift_ix}(2)*evnt.fsample);
-        epoch_idx(epoch_idx<1) = [];
-        evnt.trial{1}(photod_ix,epoch_idx) = evnt.trial{1}(photod_ix,epoch_idx) - bsln_shift_val(shift_ix);
-    end
-    % zero out drifts
-    for zero_ix = 1:length(bsln_times)
-        epoch_idx = floor(bsln_times{zero_ix}(1)*evnt.fsample):floor(bsln_times{zero_ix}(2)*evnt.fsample);
-        epoch_idx(epoch_idx<1) = [];
-        evnt.trial{1}(photod_ix,epoch_idx) = bsln_val;
-    end
-    
-    % level out stimulus periods
-    for stim_ix = 1:length(stim_times)
-        epoch_idx = floor(stim_times{stim_ix}(1)*evnt.fsample):floor(stim_times{stim_ix}(2)*evnt.fsample);
-        epoch_idx(epoch_idx<1) = [];
-        evnt.trial{1}(photod_ix,epoch_idx) = stim_yval(stim_ix);
-    end
+%     % Correct baseline shift
+%     for shift_ix = 1:length(bsln_shift_times)
+%         epoch_idx = floor(bsln_shift_times{shift_ix}(1)*evnt.fsample):floor(bsln_shift_times{shift_ix}(2)*evnt.fsample);
+%         epoch_idx(epoch_idx<1) = [];
+%         evnt.trial{1}(photod_ix,epoch_idx) = evnt.trial{1}(photod_ix,epoch_idx) - bsln_shift_val(shift_ix);
+%     end
+%     % zero out drifts
+%     for zero_ix = 1:length(bsln_times)
+%         epoch_idx = floor(bsln_times{zero_ix}(1)*evnt.fsample):floor(bsln_times{zero_ix}(2)*evnt.fsample);
+%         epoch_idx(epoch_idx<1) = [];
+%         evnt.trial{1}(photod_ix,epoch_idx) = bsln_val;
+%     end
+%     
+%     % level out stimulus periods
+%     for stim_ix = 1:length(stim_times)
+%         epoch_idx = floor(stim_times{stim_ix}(1)*evnt.fsample):floor(stim_times{stim_ix}(2)*evnt.fsample);
+%         epoch_idx(epoch_idx<1) = [];
+%         evnt.trial{1}(photod_ix,epoch_idx) = stim_yval(stim_ix);
+%     end
     
     % Save corrected data
     out_fname = fullfile(SBJ_vars.dirs.preproc,[SBJ '_evnt_clean' block_suffix '.mat']);
-    save(out_fname, 'evnt', 'hdr', 'ignore_trials', 'photod_ix', 'mic_ix');
+    save(out_fname, 'evnt', 'ignore_trials', 'photo_ix');
     
     %% ========================================================================
     %   Step 6- Parse Event Traces into Behavioral Data
     %  ========================================================================
-    % Kuan: this is where you would run a behavioral processing script
+    SBJ04_photo_parse(SBJ,b_ix,1,1);
 end
 
 %% ========================================================================
