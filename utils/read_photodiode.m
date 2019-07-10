@@ -62,32 +62,36 @@ end
 % Calculate first derivative to get edges which correspond to onsets and offsets
 data_events = [diff(data_shades) 0]; % Add a point because diff removes one
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Below is temportarily commented out to save time %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % If an edge is not sharp enough, this can lead to an intermediate shade being assigned near the real shade.
 %   Check for this and correct
-for sample_n = 1:(length(data_events)-min_event_length)
-  if ~isempty(find((data_events(sample_n:(sample_n+min_event_length))),1))
-    % There is at least one event in this time range
-    if length(find((data_events(sample_n:(sample_n+min_event_length))))) > 1
-      data_tmp = data_events(sample_n:(sample_n+min_event_length));
-      if sum(data_tmp) > 0
-        % Positive slope. Push maximum value towards the earlier time period
-        first_nz = find(data_tmp,1);
-        data_sum = sum(data_tmp);
-        data_tmp = zeros(size(data_tmp));
-        data_tmp(first_nz) = data_sum;
-      end
-      if sum(data_tmp) < 0
-        % Negative slope. Push maximum value towards the later time period
-        last_nz = find(data_tmp,1,'last');
-        data_sum = sum(data_tmp);
-        data_tmp = zeros(size(data_tmp));
-        data_tmp(last_nz) = data_sum;
-      end
-      % Mixed positive and negative should not be possible from morphological open
-      data_events(sample_n:(sample_n+min_event_length)) = data_tmp;
-    end
-  end
-end
+% for sample_n = 1:(length(data_events)-min_event_length)
+%   if ~isempty(find((data_events(sample_n:(sample_n+min_event_length))),1))
+%     % There is at least one event in this time range
+%     if length(find((data_events(sample_n:(sample_n+min_event_length))))) > 1
+%       data_tmp = data_events(sample_n:(sample_n+min_event_length));
+%       if sum(data_tmp) > 0
+%         % Positive slope. Push maximum value towards the earlier time period
+%         first_nz = find(data_tmp,1);
+%         data_sum = sum(data_tmp);
+%         data_tmp = zeros(size(data_tmp));
+%         data_tmp(first_nz) = data_sum;
+%       end
+%       if sum(data_tmp) < 0
+%         % Negative slope. Push maximum value towards the later time period
+%         last_nz = find(data_tmp,1,'last');
+%         data_sum = sum(data_tmp);
+%         data_tmp = zeros(size(data_tmp));
+%         data_tmp(last_nz) = data_sum;
+%       end
+%       % Mixed positive and negative should not be possible from morphological open
+%       data_events(sample_n:(sample_n+min_event_length)) = data_tmp;
+%     end
+%   end
+% end
 
 % Recreate the data_shades array
 data_shades = data_shades(1) + cumsum(data_events); % Adding first value of original because diff removes constant
