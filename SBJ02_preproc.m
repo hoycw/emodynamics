@@ -158,7 +158,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
     % SBJ_vars.ch_lab.left_out = [left_out_ch{:}];
     
     %% Filter out line noise
-    fprintf('============== Filtering Line Noise %s via %s ==============\n',SBJ,proc.notch_type);
+    fprintf('============== Filtering Line Noise %s ==============\n',SBJ);
     
     % 'bandstop' % method for nothc filtering out line noise
     % Calculate frequency limits

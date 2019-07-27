@@ -4,21 +4,22 @@ function SBJ05_HFA_save(SBJ,proc_id,an_id)
 
 % Set up paths
 if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
-addpath([root_dir 'emodynamics/scripts/']);
-addpath([root_dir 'emodynamics/scripts/utils/']);
+addpath(fullfile(root_dir,'emodynamics','scripts'));
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
 %% Data Preparation
-SBJ_vars_cmd = ['run ' root_dir 'emodynamics/scripts/SBJ_vars/' SBJ '_vars.m'];
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
 eval(SBJ_vars_cmd);
-an_vars_cmd = ['run ' root_dir 'emodynamics/scripts/an_vars/' an_id '_vars.m'];
+an_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','an_vars', [an_id '_vars.m'])];
 eval(an_vars_cmd);
 
 % Load Data
 load(strcat(SBJ_vars.dirs.preproc,SBJ,'_preproc_',proc_id,'.mat'));
-load(strcat(SBJ_vars.dirs.events,SBJ,'_trial_info_final.mat'));
+load(strcat(SBJ_vars.dirs.events,SBJ,'_trial_info.mat'));
 
 %% Select Channel(s)
 cfgs = [];
@@ -26,6 +27,37 @@ cfgs.channel = SBJ_vars.ch_lab.ROI;
 roi = ft_selectdata(cfgs,data);
 roi_fsample = roi.fsample;
 clear data;
+
+%% Cut into Trials
+% Always normalize to fixation baseline for HFA
+if ~strcmp(an.evnt_lab,'B') || ~strcmp(an.bsln_evnt,'B')
+    error('Emodynamics project should have baseline and event locked to the onset of fixation baseline!');
+end
+
+% Padding:
+%   At a minimum, trial_lim_s must extend 1/2*max(filter_window) prior to 
+%   the first data point to be estimated to avoid edges in the filtering window.
+%   (ft_freqanalysis will return NaN for partially empty windows, e.g. an edge pre-trial,
+%   but ft_preprocessing would return a filtered time series with an edge artifact.)
+%   Also note this padding buffer should be at least 3x the slowest cycle
+%   of interest.
+if strcmp(an.HFA_type,'multiband')
+    pad_len_s = 0.5*max(cfg_hfa.t_ftimwin)*3;
+elseif any(strcmp(an.HFA_type,{'broadband','hilbert'}))
+    % add 250 ms as a rule of thumb, or longer if necessary
+    pad_len_s = 0.5*max([1/min(an.fois)*3 0.25]);
+end
+% Cut data to bsln_lim to be consistent across S and R locked (confirmed below)
+%   Add extra 10 ms just because trimming back down to trial_lim_s exactly leave
+%   one NaN on the end (smoothing that will NaN out everything)
+cfg = [];
+cfg.trl = [trial_info.trial_onsets-pad_len_s*roi_fsample, ...          % start of trial (including baseline+buffer)
+           trial_info.trial_offsets+(pad_len_s+0.01)*roi_fsample, ...  % end of trial
+           repmat(-pad_len_s*roi_fsample, length(trial_info.trial_onsets), 1), ... % time of event relative to start of trial
+           trial_info.video_id];                                       % trial type
+cfg.trl = int64(cfg.trl);
+roi_trl = ft_redefinetrial(cfg, roi);
+% clear roi;
 
 %% Compute HFA
 fprintf('===================================================\n');
@@ -60,6 +92,16 @@ elseif strcmp(an.HFA_type,'broadband')
 else
     error('Unknown an.HFA_type provided');
 end
+
+% Trim back down to original onsets:offsets to exclude NaNs
+cfg_trim = [];
+cfg_trim.latency = [0 max(trial_info.trial_offsets-trial_info.trial_onsets)/roi_fsample];
+hfa = ft_selectdata(cfg_trim,hfa);
+% Using ft_redefinetrial allows removing the NaNs, but returns to
+%   ft_preprocessing output style, not ft_freqanalysis style
+% cfg_trim.toilim = [zeros(size(trial_info.trial_onsets)), ...
+%                    (trial_info.trial_offsets-trial_info.trial_onsets)/roi_fsample];
+% hfa = ft_redefinetrial(cfg_trim,hfa);
 
 %% Baseline Correction
 fprintf('===================================================\n');

@@ -83,7 +83,7 @@ SBJ_vars.ch_lab.eeg = {'FZ','CZ','OZ','C3','C4'};
 SBJ_vars.ch_lab.eog = {'LUE','LLE','RUE','RLE'};
 SBJ_vars.ch_lab.photod = {'DC02'};
 SBJ_vars.ch_lab.speaker    = {'DC03'};
-SBJ_vars.ch_lab.ekg = {'ekg'}
+SBJ_vars.ch_lab.ekg = {'ekg'};
 %--------------------------------------
 % Line Noise Parameters
 %--------------------------------------
@@ -103,7 +103,7 @@ SBJ_vars.analysis_time = {{[55.0 1724.0]}};
 %--------------------------------------
 % Film Trials Numbers
 %--------------------------------------
-trial_info.video_id = [1,2,3,4,5,6,7,8]
+SBJ_vars.video_id = [1,2,3,4,5,6,7,8]';
 % 1. Disgust: Roaches (154000 ms)
 % 2. Happy: Modern Times (154000 ms)
 % 3. Fear: Witness (154000 ms)

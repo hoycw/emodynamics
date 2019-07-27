@@ -1,4 +1,4 @@
-function SBJ04_photo_parse(SBJ, block, plot_it, save_it)
+function SBJ04_photo_parse(SBJ, proc_id, block, plot_it, save_it)
 % INPUTS:
 %   SBJ [str] - uniquely identifies the subject, e.g., 'IR54'
 %   block [int] - index of which block of data should be analyzed
@@ -23,6 +23,14 @@ end
 evnt_filename = [SBJ_vars.dirs.preproc SBJ '_evnt_clean',block_suffix,'.mat'];
 output_filename = [SBJ_vars.dirs.events SBJ '_trial_info',block_suffix,'.mat'];
 
+%% Get data sampling rate
+if SBJ_vars.low_srate(block)
+    data_fsample = SBJ_vars.low_srate(block);
+else
+    eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
+    data_fsample = proc.resample_freq;
+end
+
 %% Determine event onset sample points
 % Load input data
 fprintf('Loading %s\n',evnt_filename);
@@ -45,9 +53,9 @@ clear data_photo;
 
 % Diff to get edges which correspond to onsets and offsets
 data_shades = [diff(data_shades) 0]; % Add a point because diff removes one
-video_onsets = find(data_shades>0)'; % 1 to 2 is video onset. Transpose to make column vector
-video_offsets = find(data_shades<0)'; % 1 to 2 is video onset. Transpose to make column vector
-fprintf('\t\tFound %d trials in photodiode channel\n', length(video_onsets));
+photo_onsets = find(data_shades>0)'; % 1 to 2 is video onset. Transpose to make column vector
+photo_offsets = find(data_shades<0)'; % 1 to 2 is video onset. Transpose to make column vector
+fprintf('\t\tFound %d trials in photodiode channel\n', length(photo_onsets));
 
 % Plot photodiode event durations to check consistency
 if plot_it
@@ -68,6 +76,7 @@ if plot_it
 end
 
 %% Read in log file
+trial_info.video_id = SBJ_vars.video_id;
 % Open file
 % fprintf('\tReading log file\n');
 % log_h = fopen([SBJ_vars.dirs.events SBJ '_eventInfo' block_suffix '.txt'], 'r');
@@ -79,13 +88,13 @@ end
 % fprintf('\t\tFound %d trials in log file\n', length(trial_info.video_id));
 
 % Remove trials to ignore
-% trial_info.video_id(ignore_trials) = [];
+trial_info.video_id(ignore_trials) = [];
 % trial_info.log_onset_time(ignore_trials) = [];
 trial_info.ignore_trials = ignore_trials;
 fprintf('\t\tIgnoring %d trials\n', length(ignore_trials));
 
 % If log and photodiode have different n_trials, plot and error out
-if (length(trial_info.video_id) ~= length(video_onsets))
+if (length(trial_info.video_id) ~= length(photo_onsets))
     % Plot photodiode data
     plot_photo = data_photo_orig - min(data_photo_orig);
     plot_photo = plot_photo / (max(plot_photo)-min(plot_photo));
@@ -93,16 +102,38 @@ if (length(trial_info.video_id) ~= length(video_onsets))
     figure; hold on;
     plot(plot_photo, 'k');
     % Plot video onsets
-    for video_n = 1:length(video_onsets)
-        plot([video_onsets(video_n) video_onsets(video_n)],[1.30 1.40],'r','LineWidth',2);
-        plot([video_onsets(video_n) video_onsets(video_n)],[-0.35 0.35],'r','LineWidth',2);
+    for video_n = 1:length(photo_onsets)
+        plot([photo_onsets(video_n) photo_onsets(video_n)],[1.30 1.40],'r','LineWidth',2);
+        plot([photo_onsets(video_n) photo_onsets(video_n)],[-0.35 0.35],'r','LineWidth',2);
     end
     error('\nNumber of trials in log is different from number of trials found in event channel\n\n');
 end
 
+% Convert to data samples and add to trial_info
+trial_info.trial_onsets  = (photo_onsets/evnt.fsample)*data_fsample;
+trial_info.trial_offsets = (photo_offsets/evnt.fsample)*data_fsample;
 
-trial_info.video_onsets = video_onsets;
-trial_info.video_offsets = video_offsets;
+%% Add film details
+baseline_len = 31;                          % time in seconds for fixation
+film_len     = [94 94 94 94 94 94 94 99];   % time for films in seconds (Lucy is +5s)
+recovery_len = 30;                          % time of recovery film in seconds
+trial_info.video_onsets    = zeros(size(trial_info.trial_onsets));
+trial_info.recovery_onsets = zeros(size(trial_info.trial_onsets));
+for v_ix = 1:numel(trial_info.video_onsets)
+    trial_info.video_onsets(v_ix) = trial_info.trial_onsets(v_ix) + baseline_len*data_fsample;
+    trial_info.recovery_onsets(v_ix) = trial_info.video_onsets(v_ix) + film_len(trial_info.video_id(v_ix))*data_fsample;
+    
+    % Print difference between photodiode and estimated time
+    photo_len = trial_info.trial_offsets(v_ix)-trial_info.trial_onsets(v_ix);
+    estimate = (baseline_len+film_len(trial_info.video_id(v_ix))+recovery_len)*data_fsample;
+    if abs(photo_len-estimate) > data_fsample % Warning in red if > 1s off
+        fprintf(2,'\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',v_ix,...
+            (photo_len - estimate)/data_fsample);
+    else
+        fprintf('\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',v_ix,...
+            (photo_len - estimate)/data_fsample);
+    end
+end
 
 %% Save results
 if save_it
@@ -124,10 +155,18 @@ if plot_it
     
     % Plot video onsets
     for video_n = 1:length(trial_info.video_onsets)
-        plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/evnt.fsample,[1.30 1.40],'b','LineWidth',2);
-        plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/evnt.fsample,[-0.35 0.35],'b','LineWidth',2);
-        plot([trial_info.video_offsets(video_n) trial_info.video_offsets(video_n)]/evnt.fsample,[1.30 1.40],'r','LineWidth',2);
-        plot([trial_info.video_offsets(video_n) trial_info.video_offsets(video_n)]/evnt.fsample,[-0.35 0.35],'r','LineWidth',2);        
+        % Baseline onsets
+        plot([trial_info.trial_onsets(video_n) trial_info.trial_onsets(video_n)]/data_fsample,[1.30 1.40],'b','LineWidth',2);
+        plot([trial_info.trial_onsets(video_n) trial_info.trial_onsets(video_n)]/data_fsample,[-0.35 0.35],'b','LineWidth',2);
+        % Video onsets
+        plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/data_fsample,[1.30 1.40],'c','LineWidth',2);
+        plot([trial_info.video_onsets(video_n) trial_info.video_onsets(video_n)]/data_fsample,[-0.35 0.35],'c','LineWidth',2);
+        % Recovery onsets
+        plot([trial_info.recovery_onsets(video_n) trial_info.recovery_onsets(video_n)]/data_fsample,[1.30 1.40],'g','LineWidth',2);
+        plot([trial_info.recovery_onsets(video_n) trial_info.recovery_onsets(video_n)]/data_fsample,[-0.35 0.35],'g','LineWidth',2);
+        % Trial offsets
+        plot([trial_info.trial_offsets(video_n) trial_info.trial_offsets(video_n)]/data_fsample,[1.30 1.40],'r','LineWidth',2);
+        plot([trial_info.trial_offsets(video_n) trial_info.trial_offsets(video_n)]/data_fsample,[-0.35 0.35],'r','LineWidth',2);        
         
     end
     
@@ -135,8 +174,6 @@ if plot_it
         fig_fname = [SBJ_vars.dirs.events SBJ '_events.fig'];
         saveas(gcf,fig_fname);
     end
-    
- 
 end
 
 end

@@ -113,7 +113,7 @@ SBJ_vars.analysis_time = {{[0.0 0.0]}};
 %--------------------------------------
 % Film Trials Numbers
 %--------------------------------------
-trial_info.video_id = []
+SBJ_vars.video_id = []';
 % 1. Disgust: Roaches (154000 ms)
 % 2. Happy: Modern Times (154000 ms)
 % 3. Fear: Witness (154000 ms)
