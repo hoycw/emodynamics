@@ -1,4 +1,4 @@
-an.evnt_lab    = 'B';              % event around which to cut trials
+an.evnt_lab    = 'BMR';              % event around which to cut trials
 % trial_lim_s will NOT be full of data! the first and last t_ftimwin/2 epochs will be NaNs
 %an.trial_lim_s = [0.0 180.0];      % window in SEC for cutting trials
 an.demean_yn   = 'no';             % z-score for HFA instead

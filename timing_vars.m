@@ -1,4 +1,12 @@
 
+%% Times of trial elements (in sec)
+% Time for baseline fixation
+times.bsln_len = 32;
+% Time for movies in sec (Lucy is +5s)
+times.movie_len = [90.133 90.067 90.133 90.067 90.133 90.033 90.133 94.7];
+% Time for recovery (neutral) movie
+times.recov_len = 32.033;
+
 % 30 frames per second (from #0 to #29)
 % format: MM:SS:frame number
 % MM = 00-59

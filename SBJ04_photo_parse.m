@@ -114,6 +114,10 @@ trial_info.trial_onsets  = (photo_onsets/evnt.fsample)*data_fsample;
 trial_info.trial_offsets = (photo_offsets/evnt.fsample)*data_fsample;
 
 %% Add film details
+% Load timing information about videos
+timing_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts', 'timing_vars.m')];
+eval(timing_vars_cmd);
+
 % Film Number:
 % 1. Disgust: Roaches
 % 2. Happy: Modern Times
@@ -125,24 +129,21 @@ trial_info.trial_offsets = (photo_offsets/evnt.fsample)*data_fsample;
 % 8. Happy: Lucy 
 % Note that order of these films diffed between subjects
 
-baseline_len = 32;                          % time in seconds for fixation
-film_len     = [90.133 90.067 90.133 90.067 90.133 90.033 90.133 94.7]; % time for films in seconds (Lucy is +5s)
-recovery_len = 32.033;                          % time of recovery film in seconds
 trial_info.video_onsets    = zeros(size(trial_info.trial_onsets));
 trial_info.recovery_onsets = zeros(size(trial_info.trial_onsets));
 for v_ix = 1:numel(trial_info.video_onsets)
-    trial_info.video_onsets(v_ix) = trial_info.trial_onsets(v_ix) + baseline_len*data_fsample;
-    trial_info.recovery_onsets(v_ix) = trial_info.video_onsets(v_ix) + film_len(trial_info.video_id(v_ix))*data_fsample;
+    trial_info.video_onsets(v_ix) = trial_info.trial_onsets(v_ix) + times.bsln_len*data_fsample;
+    trial_info.recovery_onsets(v_ix) = trial_info.video_onsets(v_ix) + times.movie_len(trial_info.video_id(v_ix))*data_fsample;
     
     % Print difference between photodiode and estimated time
     photo_len = trial_info.trial_offsets(v_ix)-trial_info.trial_onsets(v_ix);
-    estimate = (baseline_len+film_len(trial_info.video_id(v_ix))+recovery_len)*data_fsample;
+    estimate = (times.bsln_len+times.movie_len(trial_info.video_id(v_ix))+times.recov_len)*data_fsample;
     if abs(photo_len-estimate) > data_fsample % Warning in red if > 1s off
-        fprintf(2,'\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',v_ix,...
-            (photo_len - estimate)/data_fsample);
+        fprintf(2,'\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',...
+            trial_info.video_id(v_ix), (photo_len - estimate)/data_fsample);
     else
-        fprintf('\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',v_ix,...
-            (photo_len - estimate)/data_fsample);
+        fprintf('\tVideo %d: photo_len - (baseline+film+recovery) = %.3f s\n',...
+            trial_info.video_id(v_ix), (photo_len - estimate)/data_fsample);
     end
 end
 

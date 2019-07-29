@@ -65,7 +65,7 @@ cfg.trl = [trial_info.trial_onsets-pad_len_s*roi_fsample, ...          % start o
            trial_info.trial_offsets+(pad_len_s+0.01)*roi_fsample, ...  % end of trial
            repmat(-pad_len_s*roi_fsample, length(trial_info.trial_onsets), 1), ... % time of event relative to start of trial
            trial_info.video_id];                                       % trial type
-cfg.trl = int64(cfg.trl);
+cfg.trl = round(cfg.trl);
 roi_trl = ft_redefinetrial(cfg, roi);
 % clear roi;
 
