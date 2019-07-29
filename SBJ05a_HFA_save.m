@@ -1,5 +1,15 @@
-function SBJ05_HFA_save(SBJ,proc_id,an_id)
-% Calculates high frequency activity, computes cluster-based statistics, and plots the results
+function SBJ05a_HFA_save(SBJ,proc_id,an_id)
+% Calculates high frequency activity:
+%   selects preproc to SBJ_vars.ch_lab.ROI
+%   adds padding to  epochs of interest (for filtering)
+%   Cuts to trials
+%   computes HFA: multitaper or filter-hilbert methods
+%   cuts of filter padding epochs
+%   baseline correction (zscore with/without bootstrapping)
+%   filter for smoothing
+%   recombine sub-bands
+%   downsample
+%   save
 % clear all; %close all;
 
 % Set up paths
