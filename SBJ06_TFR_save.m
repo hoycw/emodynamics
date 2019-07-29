@@ -9,7 +9,7 @@ error('NOTE READY FOR EMODYNAMICS YET! switch to save styel then run separate st
 
 % clear all; %close all;
 %% Check which root directory
-if exist('/home/knight/hoycw/','dir');root_dir='/home/knight/hoycw/';ft_dir=[root_dir 'Apps/fieldtrip/'];
+if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 
 %% Set Up Directories
