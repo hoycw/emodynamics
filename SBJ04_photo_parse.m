@@ -114,9 +114,20 @@ trial_info.trial_onsets  = (photo_onsets/evnt.fsample)*data_fsample;
 trial_info.trial_offsets = (photo_offsets/evnt.fsample)*data_fsample;
 
 %% Add film details
-baseline_len = 31;                          % time in seconds for fixation
-film_len     = [94 94 94 94 94 94 94 99];   % time for films in seconds (Lucy is +5s)
-recovery_len = 30;                          % time of recovery film in seconds
+% Film Number:
+% 1. Disgust: Roaches
+% 2. Happy: Modern Times
+% 3. Fear: Witness
+% 4. Neutral: Sticks
+% 5. Fear: Cujo
+% 6. Disgust: Poop Lady
+% 7. Neutral: ColorBars
+% 8. Happy: Lucy 
+% Note that order of these films diffed between subjects
+
+baseline_len = 32;                          % time in seconds for fixation
+film_len     = [90.133 90.067 90.133 90.067 90.133 90.033 90.133 94.7]; % time for films in seconds (Lucy is +5s)
+recovery_len = 32.033;                          % time of recovery film in seconds
 trial_info.video_onsets    = zeros(size(trial_info.trial_onsets));
 trial_info.recovery_onsets = zeros(size(trial_info.trial_onsets));
 for v_ix = 1:numel(trial_info.video_onsets)
