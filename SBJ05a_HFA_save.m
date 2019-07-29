@@ -40,8 +40,8 @@ clear data;
 
 %% Cut into Trials
 % Always normalize to fixation baseline for HFA
-if ~strcmp(an.evnt_lab,'B') || ~strcmp(an.bsln_evnt,'B')
-    error('Emodynamics project should have baseline and event locked to the onset of fixation baseline!');
+if ~strcmp(an.bsln_evnt,'B')
+    error('Emodynamics project should have bsln_evnt as fixation baseline!');
 end
 
 % Padding:

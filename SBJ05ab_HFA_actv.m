@@ -44,19 +44,22 @@ cfg_trim.latency = [0.0 times.bsln_len];
 bsln = ft_selectdata(cfg_trim,data);
 
 %% Select data in stat window
-cfg_trim = [0 0];
+cfg_trim.latency = nan([1 2]);
 if ~isempty(strfind(st.evnt_lab,'B'))      % Baseline
     cfg_trim.latency(1) = min([cfg_trim.latency(1) 0]);
     cfg_trim.latency(2) = max([cfg_trim.latency(2) times.bsln_len]);
 elseif ~isempty(strfind(st.evnt_lab,'M'))  % Movies
-    cfg_trim.latency(1) = min([cfg_trim.latency(1) 0]);
-    cfg_trim.latency(2) = max([cfg_trim.latency(2) times.bsln_len]);
+    cfg_trim.latency(1) = min([cfg_trim.latency(1) times.bsln_len]);
+    cfg_trim.latency(2) = max([cfg_trim.latency(2) times.bsln_len+max(times.movie_len)]);
 elseif ~isempty(strfind(st.evnt_lab,'R'))  % Recovery
-    cfg_trim.latency(1) = min([cfg_trim.latency(1) 0]);
-    cfg_trim.latency(2) = max([cfg_trim.latency(2) times.bsln_len]);
+    cfg_trim.latency(1) = min([cfg_trim.latency(1) times.bsln_len+max(times.movie_len)]);
+    cfg_trim.latency(2) = max([cfg_trim.latency(2) times.bsln_len+max(times.movie_len)+times.recov_len]);
 end
 cfg_trim.latency = st.stat_lim;
 hfa_stat = ft_selectdata(cfg_trim,hfa);
+
+% Remove misaligned data
+
 
 %% Run Statistics
 fprintf('===================================================\n');
