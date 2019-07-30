@@ -1,5 +1,5 @@
-function SBJ05ab_HFA_actv(SBJ,an_id,stat_id)
-%% function SBJ08ab_HFA_actv(SBJ,an_id,stat_id)
+function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
+%% function SBJ08ab_HFA_corr(SBJ,an_id,stat_id)
 %   Calculates activation relative to baseline (0) via point wise t-test
 %   t-test pval converted to qval via FDR
 %   Smart windows based on SBJ-specific RTs
@@ -9,7 +9,7 @@ function SBJ05ab_HFA_actv(SBJ,an_id,stat_id)
 %   an_id [str] - HFA analysis to run stats
 %   stat_id [str] - ID of the statistical parameters
 % OUTPUTS:
-%   actv [struct] - pseudo-FT structure with main outputs
+%   corr [struct] - pseudo-FT structure with main outputs
 %   st [struct] - stat params loaded via stat_id
 
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
@@ -37,6 +37,44 @@ hfa_fname = strcat(SBJ_vars.dirs.proc,SBJ,'_ROI_',an_id,'.mat');
 load(hfa_fname);
 load(strcat(SBJ_vars.dirs.events,SBJ,'_trial_info.mat'));
 
+%% Load Covaraites
+if strcmp(st.model_lab,'crEKG')
+    load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
+    load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
+    cov = ekg;
+    cov.trial{1} = ibi_1000hz_cubic;
+    % Segment to trials
+    max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
+    cfg = [];
+    cfg.trl = [trial_info.trial_onsets, ...             % start of trial (including baseline+buffer)
+        trial_info.trial_onsets+max_trl_len, ...                   % end of trial
+        zeros([length(trial_info.trial_onsets) 1]), ... % time of event relative to start of trial
+        trial_info.video_id];                           % trial type
+    cfg.trl = round(cfg.trl);
+    cov = ft_redefinetrial(cfg, cov);
+elseif strcmp(st.model_lab,'crRat')
+    load(fullfile(root_dir,'emodynamics','data','Behavioral Data','behaviors_no film 7, with film 9 friends.mat'));
+    % Load EKG just to make a dummy structure
+    load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
+    cov = ekg;
+    % Segment to trials
+    max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
+    cfg = [];
+    cfg.trl = [trial_info.trial_onsets, ...             % start of trial (including baseline+buffer)
+        trial_info.trial_onsets+max_trl_len, ...                   % end of trial
+        zeros([length(trial_info.trial_onsets) 1]), ... % time of event relative to start of trial
+        trial_info.video_id];                           % trial type
+    cfg.trl = round(cfg.trl);
+    cov = ft_redefinetrial(cfg, cov);
+    % Add in Rating data
+    for m_ix = 1:numel(trial_info.video_id)
+        cov.trial{m_ix} = nan(size(cov.trial{m_ix}));
+        cov.trial{m_ix}(1,1:numel(export_normative{m_ix})) = export_normative{m_ix};
+    end
+else
+    error(['Unknown st.model_lab: ' st.model_lab]);
+end
+
 %% Build null distribution
 fprintf('===================================================\n');
 fprintf('--------------------- Baselines -------------------\n');
@@ -46,6 +84,7 @@ cfg_trim = [];
 cfg_trim.trials = 'all';
 cfg_trim.latency = [0.0 times.bsln_len];
 bsln_hfa = ft_selectdata(cfg_trim,hfa);
+bsln_cov = ft_selectdata(cfg_trim,cov);
 % bsln_cat = ft_appenddata([], bsln_hfa);
 % bsln_cat = horzcat(bsln_cat.trial{:});
 % if any(isnan(bsln_cat(:))); error('why are there nans in baseline?'); end
@@ -55,11 +94,11 @@ win_lim    = fn_sliding_window_lim(squeeze(bsln_hfa.powspctrm(1,1,1,:)),...
     round(st.win_step*trial_info.sample_rate));
 
 % Build distribution of window averages
-% Create structure for actv in fieldtrip style
+% Create structure for corr in fieldtrip style
 bsln.label     = bsln_hfa.label;
 bsln.dimord    = 'rpt_chan_time';
 bsln.time      = bsln_hfa.time(round(mean(win_lim,2)));
-bsln.avg       = nan([size(bsln_hfa.powspctrm,1) size(bsln_hfa.powspctrm,2) size(win_lim,1)]);
+bsln.r2        = nan([size(bsln_hfa.powspctrm,1) size(bsln_hfa.powspctrm,2) size(win_lim,1)]);
 bsln.win_lim   = win_lim;
 bsln.win_lim_s = bsln_hfa.time(win_lim);
 bsln.thresh    = nan(size(bsln.label));
@@ -74,12 +113,18 @@ for ch_ix = 1:numel(bsln_hfa.label)
         end
         % Average HFA per window
         for w_ix = 1:size(win_lim,1)
-            bsln.avg(m_ix,ch_ix,w_ix) = squeeze(mean(bsln_hfa.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)),4));
+            corr_data = squeeze(bsln_cov.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
+            if ~any(isnan(corr_data))
+                tmp = corrcoef(squeeze(bsln_hfa.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))),...
+                               corr_data);
+                bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
+            end
         end
     end
     % Compute threshold
-    bsln_vals = sort(abs(reshape(bsln.avg(:,ch_ix,:),[size(bsln.avg,1)*size(bsln.avg,3) 1])),'descend');
-    bsln.thresh(ch_ix) = bsln_vals(numel(bsln_vals)*st.alpha);
+    bsln_vals = sort(abs(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1])),'descend');
+    bsln_vals(isnan(bsln_vals)) = [];
+    bsln.thresh(ch_ix) = bsln_vals(round(numel(bsln_vals)*st.alpha));
 end
 fprintf('\n');
 
@@ -93,11 +138,13 @@ elseif strcmp(st.evnt_lab,'M') || strcmp(st.evnt_lab,'BM')
         cfg_trim.latency(1) = 0;
     end
     hfa_stat = ft_selectdata(cfg_trim,hfa);
+    cov_stat = ft_selectdata(cfg_trim,cov);
     % NaN out non-movie data for shorter movies
     for v_ix = 1:numel(times.movie_len)
         if trial_info.video_id(v_ix)~=8
             time_idx = hfa_stat.time > times.bsln_len+times.movie_len(trial_info.video_id(v_ix));
             hfa_stat.powspctrm(v_ix,:,1,time_idx) = nan([size(hfa_stat.powspctrm,2) sum(time_idx)]);
+            cov_stat.trial{v_ix}(1,time_idx) = nan([1 sum(time_idx)]);
         end
     end
 elseif strcmp(st.evnt_lab,'R')
@@ -105,8 +152,10 @@ elseif strcmp(st.evnt_lab,'R')
 elseif strcmp(st.evnt_lab,'MR')
     cfg_trim.latency = [times.bsln_len hfa.time(end)];
     hfa_stat = ft_selectdata(cfg_trim,hfa);
+    cov_stat = ft_selectdata(cfg_trim,cov);
 elseif strcmp(st.evnt_lab,'BMR')
     hfa_stat = hfa;
+    cov_stat = cov;
 elseif strcmp(st.evnt_lab,'BR')
     error('why include non-consecutive events baseline and recovery?');
 else
@@ -124,16 +173,16 @@ fprintf('===================================================\n');
 fprintf('--------------------- Statistics ------------------\n');
 fprintf('===================================================\n');
 
-% Create structure for actv in fieldtrip style
-actv.label     = hfa_stat.label;
-actv.dimord    = 'rpt_chan_time';
-actv.time      = hfa_stat.time(win_center);
-actv.avg       = nan([size(hfa_stat.powspctrm,1) size(hfa_stat.powspctrm,2) size(win_lim,1)]);
-actv.win_lim   = win_lim;
-actv.win_lim_s = hfa_stat.time(win_lim);
-actv.pval      = nan(size(actv.avg));
-actv.qmask     = nan(size(actv.avg));
-actv.mask      = nan(size(actv.avg));
+% Create structure for corr in fieldtrip style
+corr.label     = hfa_stat.label;
+corr.dimord    = 'rpt_chan_time';
+corr.time      = hfa_stat.time(win_center);
+corr.r2        = nan([size(hfa_stat.powspctrm,1) size(hfa_stat.powspctrm,2) size(win_lim,1)]);
+corr.win_lim   = win_lim;
+corr.win_lim_s = hfa_stat.time(win_lim);
+corr.pval      = nan(size(corr.r2));
+corr.qmask     = nan(size(corr.r2));
+corr.mask      = nan(size(corr.r2));
 
 % Compute t-test per movie, channel, and window
 for m_ix = 1:numel(trial_info.video_id)
@@ -142,49 +191,55 @@ for m_ix = 1:numel(trial_info.video_id)
         if mod(ch_ix,30)==0; fprintf('\n\t'); end
         fprintf('%d..',ch_ix);
         for w_ix = 1:size(win_lim,1)
+            corr_data = squeeze(cov_stat.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
             % Skip windows with bad/no data
-            if ~any(isnan(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))))
-                actv.avg(m_ix,ch_ix,w_ix) = squeeze(nanmean(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)),4));
-                % Compute one-sided test
-                bsln_vals = sort(reshape(bsln.avg(:,ch_ix,:),[size(bsln.avg,1)*size(bsln.avg,3) 1]),'descend');
-                actv.pval(m_ix,ch_ix,w_ix) = 1-(sum(actv.avg(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
-                if actv.pval(m_ix,ch_ix,w_ix)<=st.alpha
-                    actv.mask(m_ix,ch_ix,w_ix) = 1;
-                else
-                    actv.mask(m_ix,ch_ix,w_ix) = 0;
-                end
-                % Correct for multiple comparisons
-                if actv.pval(m_ix,ch_ix,w_ix)<=st.alpha/size(win_lim,1)
-                    actv.qmask(m_ix,ch_ix,w_ix) = 1;
-                else
-                    actv.qmask(m_ix,ch_ix,w_ix) = 0;
-                end
-%                 [~, actv.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
+            if ~any(isnan(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)))) && ...
+                    ~any(isnan(corr_data))
+                tmp = corrcoef(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))),...
+                    corr_data);
+                corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
             end
+            % Compute one-sided test
+            bsln_vals = sort(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1]),'descend');
+            bsln_vals(isnan(bsln_vals)) = [];
+            
+            corr.pval(m_ix,ch_ix,w_ix) = 1-(sum(corr.r2(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
+            if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha
+                corr.mask(m_ix,ch_ix,w_ix) = 1;
+            else
+                corr.mask(m_ix,ch_ix,w_ix) = 0;
+            end
+            % Correct for multiple comparisons
+            if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha/size(win_lim,1)
+                corr.qmask(m_ix,ch_ix,w_ix) = 1;
+            else
+                corr.qmask(m_ix,ch_ix,w_ix) = 0;
+            end
+%             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
         end
         
         % Adjust for multiple comparisons
-%         good_idx = ~isnan(actv.pval(m_ix,ch_ix,:));
-%         [~, ~, ~, actv.qval(m_ix,ch_ix,good_idx)] = fdr_bh(actv.pval(m_ix,ch_ix,good_idx));
-%         actv.mask(m_ix,ch_ix,good_idx) = actv.qval(m_ix,ch_ix,good_idx)<=st.alpha;
+%         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
+%         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
+%         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
     end
     fprintf('\n');
 end
 
 %% Print results
 % Compile positive and negative stats
-sig_mat = zeros([numel(actv.label) numel(trial_info.video_id)]);
+sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
 for m_ix = 1:numel(trial_info.video_id)
-    for ch_ix = 1:numel(actv.label)
+    for ch_ix = 1:numel(corr.label)
         % Consolidate to binary sig/non-sig
-        if any(squeeze(actv.mask(m_ix,ch_ix,:)))
+        if any(squeeze(corr.mask(m_ix,ch_ix,:)))
             sig_mat(ch_ix,m_ix) = 1;
 %             % Flag whether positive or negative
-%             sig_idx = squeeze(actv.qval(m_ix,ch_ix,:))<=st.alpha;
-%             if any(squeeze(actv.avg(m_ix,ch_ix,sig_idx))>0)
+%             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
+%             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
 %                 sig_mat(m_ix,ch_ix,2) = 1;
 %             end
-%             if any(squeeze(actv.avg(m_ix,ch_ix,sig_idx))<0)
+%             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))<0)
 %                 sig_mat(m_ix,ch_ix,3) = 1;
 %             end
         end
@@ -200,18 +255,18 @@ sig_report = fopen(sig_report_fname,'a');
 result_str = ['%-10s' repmat('%-10i',[1 numel(trial_info.video_id)]) '\n'];
 
 % Print header
-fprintf(sig_report,'%s (n = %i)\n',SBJ,numel(actv.label));
+fprintf(sig_report,'%s (n = %i)\n',SBJ,numel(corr.label));
 fprintf(sig_report,['%-10s' repmat('%-10d',[1 numel(trial_info.video_id)]) '\n'],'label',trial_info.video_id);
 
 % Print summary lines (absolute)
 fprintf(sig_report,result_str, 'count', sum(sig_mat,1));
 fprintf(sig_report,strrep(result_str,'i','.3f'), 'percent',...
-    sum(sig_mat,1)./numel(actv.label));
+    sum(sig_mat,1)./numel(corr.label));
 
 % Print Channel Lines
-for ch_ix = 1:numel(actv.label)
+for ch_ix = 1:numel(corr.label)
     % Report on significant electrodes for this SBJ
-    fprintf(sig_report,result_str,actv.label{ch_ix},sig_mat(ch_ix,:));
+    fprintf(sig_report,result_str,corr.label{ch_ix},sig_mat(ch_ix,:));
 end
 
 fclose(sig_report);
@@ -221,6 +276,6 @@ out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
 fprintf('===================================================\n');
 fprintf('--- Saving %s ------------------\n',out_fname);
 fprintf('===================================================\n');
-save(out_fname,'-v7.3','actv','bsln','st','sig_mat');
+save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','sig_mat');
 
 end

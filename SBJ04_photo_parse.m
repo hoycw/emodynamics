@@ -30,6 +30,7 @@ else
     eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
     data_fsample = proc.resample_freq;
 end
+trial_info.sample_rate = data_fsample;
 
 %% Determine event onset sample points
 % Load input data
