@@ -140,11 +140,11 @@ elseif strcmp(st.evnt_lab,'M') || strcmp(st.evnt_lab,'BM')
     hfa_stat = ft_selectdata(cfg_trim,hfa);
     cov_stat = ft_selectdata(cfg_trim,cov);
     % NaN out non-movie data for shorter movies
-    for v_ix = 1:numel(times.movie_len)
-        if trial_info.video_id(v_ix)~=8
-            time_idx = hfa_stat.time > times.bsln_len+times.movie_len(trial_info.video_id(v_ix));
-            hfa_stat.powspctrm(v_ix,:,1,time_idx) = nan([size(hfa_stat.powspctrm,2) sum(time_idx)]);
-            cov_stat.trial{v_ix}(1,time_idx) = nan([1 sum(time_idx)]);
+    for m_ix = 1:numel(times.movie_len)
+        if trial_info.video_id(m_ix)~=8
+            time_idx = hfa_stat.time > times.bsln_len+times.movie_len(trial_info.video_id(m_ix));
+            hfa_stat.powspctrm(m_ix,:,1,time_idx) = nan([size(hfa_stat.powspctrm,2) sum(time_idx)]);
+            cov_stat.trial{m_ix}(1,time_idx) = nan([1 sum(time_idx)]);
         end
     end
 elseif strcmp(st.evnt_lab,'R')
