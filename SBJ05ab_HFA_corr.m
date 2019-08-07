@@ -36,21 +36,25 @@ eval(timing_vars_cmd);
 hfa_fname = strcat(SBJ_vars.dirs.proc,SBJ,'_ROI_',an_id,'.mat');
 load(hfa_fname);
 load(strcat(SBJ_vars.dirs.events,SBJ,'_trial_info.mat'));
-% !!! Kuan: load bad_epochs here
-%   You will need to check how to get the epoch data samples into the trial
-%   timing...
+load([SBJ_vars.dirs.events,SBJ,'_bad_epochs_preproc.mat']);
+
+% Load EKG as a dummy structure for the covariate of interest
+load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
+cov = ekg;
 
 %% Remove bad_epochs
 % Convert bad_epochs to trial times
+% !!! Kuan: figure out how to get the sample number from analysis_time
+% (bad_epochs_preproc) into the time/sample from the start of each movie
 
 % Remove bad epochs
+% !!! Kuan: now you need to make the data during the epochs (adjusted to
+% trials) into NaN
 
 %% Load Covaraites
-% !!! Kuan: deal with down sampling these data to the FHA sampling rate (an.resample_freq)
+% !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
 if strcmp(st.model_lab,'crEKG')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
-    load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov = ekg;
     cov.trial{1} = ibi_1000hz_cubic;
     % Segment to trials
     max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
@@ -63,9 +67,6 @@ if strcmp(st.model_lab,'crEKG')
     cov = ft_redefinetrial(cfg, cov);
 elseif strcmp(st.model_lab,'crRat')
     load(fullfile(root_dir,'emodynamics','data','Behavioral Data','behaviors_no film 7, with film 9 friends.mat'));
-    % Load EKG just to make a dummy structure
-    load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov = ekg;
     % Segment to trials
     max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
     cfg = [];

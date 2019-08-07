@@ -126,7 +126,7 @@ load(fullfile(SBJ_vars.dirs.preproc,[SBJ '_preproc_' proc_id '.mat']));
 preclean_ep_at = fn_compile_epochs_full2at(SBJ,proc_id);
 
 % Plot data with bad_epochs highlighted
-load(strcat(root_dir,'emodynamics/scripts/utils/cfg_plot.mat'));
+load(fullfile(root_dir,'emodynamics','scripts','utils','cfg_plot.mat'));
 % If you want to see preclean bad_epochs:
 cfg_plot.artfctdef.visual.artifact = preclean_ep_at;
 if isfield(data,'sampleinfo')   % the data.sample_info field can mess up the viewing sometimes...
