@@ -126,7 +126,7 @@ for ch_ix = 1:numel(bsln_hfa.label)
             if ~any(isnan(cov_data)) && ~any(isnan(hfa_data))
                 tmp = corrcoef(hfa_data,cov_data);
                 bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                bsln.good_win(m_ix,w_ix) = 1;
+                bsln.good_win(w_ix) = 1;
             end
         end
     end
@@ -206,7 +206,7 @@ for m_ix = 1:numel(trial_info.video_id)
             if ~any(isnan(hfa_data)) && ~any(isnan(cov_data))
                 tmp = corrcoef(hfa_data,cov_data);
                 corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                corr.good_win(m_ix,w_ix) = 1;
+                corr.good_win(w_ix) = 1;
             end
             % Compute one-sided test
             bsln_vals = sort(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1]),'descend');
