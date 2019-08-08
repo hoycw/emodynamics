@@ -166,7 +166,7 @@ cfg_avg.avgoverfreq = 'yes';
 hfa = ft_selectdata(cfg_avg,hfa);
 
 %% Downsample
-if an.resample_ts && hfa.fsample~=an.resample_freq
+if an.resample_ts && roi_fsample~=an.resample_freq
     cfgrs = [];
     cfgrs.resamplefs = an.resample_freq;
     cfgrs.detrend = 'no';
