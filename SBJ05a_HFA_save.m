@@ -146,14 +146,30 @@ if an.smooth_pow_ts
     fprintf('===================================================\n');
     for ch_ix = 1:numel(hfa.label)
         for f_ix = 1:numel(hfa.freq)
-            if strcmp(an.lp_yn,'yes') && strcmp(an.hp_yn,'yes')
-                hfa.powspctrm(:,ch_ix,f_ix,:) = fn_EEGlab_bandpass(...
-                    hfa.powspctrm(:,ch_ix,f_ix,:), roi_fsample, an.hp_freq, an.lp_freq);
-            elseif strcmp(an.lp_yn,'yes')
-                hfa.powspctrm(:,ch_ix,f_ix,:) = fn_EEGlab_lowpass(...
-                    hfa.powspctrm(:,ch_ix,f_ix,:), roi_fsample, an.lp_freq);
+            if any(any(isnan(hfa.powspctrm(:,ch_ix,f_ix,:))))
+                % If NaNs, need to do trial by trial smoothing excluding NaNs
+                for t_ix = 1:size(hfa.powspctrm,1)
+                    good_idx = squeeze(~isnan(hfa.powspctrm(t_ix,ch_ix,f_ix,:)));
+                    if strcmp(an.lp_yn,'yes') && strcmp(an.hp_yn,'yes')
+                        hfa.powspctrm(t_ix,ch_ix,f_ix,good_idx) = fn_EEGlab_bandpass(...
+                            hfa.powspctrm(t_ix,ch_ix,f_ix,good_idx), roi_fsample, an.hp_freq, an.lp_freq);
+                    elseif strcmp(an.lp_yn,'yes')
+                        hfa.powspctrm(t_ix,ch_ix,f_ix,good_idx) = fn_EEGlab_lowpass(...
+                            hfa.powspctrm(t_ix,ch_ix,f_ix,good_idx), roi_fsample, an.lp_freq);
+                    else
+                        error('weird non-Y/N filtering options!');
+                    end
+                end
             else
-                error('weird non-Y/N filtering options!');
+                if strcmp(an.lp_yn,'yes') && strcmp(an.hp_yn,'yes')
+                    hfa.powspctrm(:,ch_ix,f_ix,:) = fn_EEGlab_bandpass(...
+                        hfa.powspctrm(:,ch_ix,f_ix,:), roi_fsample, an.hp_freq, an.lp_freq);
+                elseif strcmp(an.lp_yn,'yes')
+                    hfa.powspctrm(:,ch_ix,f_ix,:) = fn_EEGlab_lowpass(...
+                        hfa.powspctrm(:,ch_ix,f_ix,:), roi_fsample, an.lp_freq);
+                else
+                    error('weird non-Y/N filtering options!');
+                end
             end
         end
     end
