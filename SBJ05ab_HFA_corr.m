@@ -41,15 +41,14 @@ load([SBJ_vars.dirs.events,SBJ,'_bad_epochs_preproc.mat']);
 % Load EKG as a dummy structure for the covariate of interest
 load([SBJ_vars.dirs.import,SBJ,'_ekg_',num2str(trial_info.sample_rate),'hz.mat']);
 cov = ekg;
-
-%% Remove bad_epochs
-% Convert bad_epochs to trial times
-% !!! Kuan: figure out how to get the sample number from analysis_time
-% (bad_epochs_preproc) into the time/sample from the start of each movie
-
-% Remove bad epochs
-% !!! Kuan: now you need to make the data during the epochs (adjusted to
-% trials) into NaN
+% Prepare to cut trials
+max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
+cfgs = [];
+cfgs.trl = [trial_info.trial_onsets, ...             % start of trial (including baseline+buffer)
+    trial_info.trial_onsets+max_trl_len, ...                   % end of trial
+    zeros([length(trial_info.trial_onsets) 1]), ... % time of event relative to start of trial
+    trial_info.video_id];                           % trial type
+cfgs.trl = round(cfgs.trl);
 
 %% Load Covaraites
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
@@ -57,25 +56,11 @@ if strcmp(st.model_lab,'crEKG')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
     cov.trial{1} = ibi_1000hz_cubic;
     % Segment to trials
-    max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
-    cfg = [];
-    cfg.trl = [trial_info.trial_onsets, ...             % start of trial (including baseline+buffer)
-        trial_info.trial_onsets+max_trl_len, ...                   % end of trial
-        zeros([length(trial_info.trial_onsets) 1]), ... % time of event relative to start of trial
-        trial_info.video_id];                           % trial type
-    cfg.trl = round(cfg.trl);
-    cov = ft_redefinetrial(cfg, cov);
+    cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRat')
     load(fullfile(root_dir,'emodynamics','data','Behavioral Data','behaviors_no film 7, with film 9 friends.mat'));
     % Segment to trials
-    max_trl_len = max(trial_info.trial_offsets-trial_info.trial_onsets);
-    cfg = [];
-    cfg.trl = [trial_info.trial_onsets, ...             % start of trial (including baseline+buffer)
-        trial_info.trial_onsets+max_trl_len, ...                   % end of trial
-        zeros([length(trial_info.trial_onsets) 1]), ... % time of event relative to start of trial
-        trial_info.video_id];                           % trial type
-    cfg.trl = round(cfg.trl);
-    cov = ft_redefinetrial(cfg, cov);
+    cov = ft_redefinetrial(cfgs, cov);
     % Add in Rating data
     for m_ix = 1:numel(trial_info.video_id)
         cov.trial{m_ix} = nan(size(cov.trial{m_ix}));
@@ -84,6 +69,15 @@ elseif strcmp(st.model_lab,'crRat')
 else
     error(['Unknown st.model_lab: ' st.model_lab]);
 end
+
+%% Remove bad_epochs from HFA
+% Convert bad_epochs to trial times using cov.sampleinfo
+% !!! Kuan: figure out how to get the sample number from analysis_time
+% (bad_epochs_preproc) into the time/sample from the start of each movie
+
+% Remove bad epochs
+% !!! Kuan: now you need to make the data during the epochs (adjusted to
+% trials) into NaN
 
 %% Build null distribution
 fprintf('===================================================\n');
@@ -118,6 +112,7 @@ fprintf('Building baseline distribution...\n\t');
 for ch_ix = 1:numel(bsln_hfa.label)
     fprintf('%d..',ch_ix);
     if mod(ch_ix,30)==0; fprintf('\n\t'); end
+    bsln_vals = [];
     for m_ix = 1:numel(trial_info.video_id)
         % Average HFA per window
         for w_ix = 1:size(win_lim,1)
@@ -125,15 +120,17 @@ for ch_ix = 1:numel(bsln_hfa.label)
             hfa_data = squeeze(bsln_hfa.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
             % If cov and hfa don't have NaNs, compute correlation
             if ~any(isnan(cov_data)) && ~any(isnan(hfa_data))
+                % !!! Kuan: can switch this to xcov, add lags
                 tmp = corrcoef(hfa_data,cov_data);
                 bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
                 bsln.good_win(m_ix,w_ix) = 1;
+                bsln_vals = [bsln_vals tmp(1,2)];
             end
         end
     end
     % Compute threshold
-    bsln_vals = sort(abs(reshape(bsln.r2(:,ch_ix,bsln.good_win),[size(bsln.r2,1)*sum(bsln.good_win) 1])),'descend');
-    bsln.thresh(ch_ix) = bsln_vals(round(numel(bsln_vals)*st.alpha));
+    bsln_sort = sort(abs(bsln_vals),'descend');
+    bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
 end
 fprintf('\n');
 
@@ -193,6 +190,7 @@ corr.good_win  = false([numel(trial_info.video_id) size(corr.time,1)]);
 corr.pval      = nan(size(corr.r2));
 corr.qmask     = nan(size(corr.r2));
 corr.mask      = nan(size(corr.r2));
+% corr.mask2     = nan(size(corr.r2));
 
 % Compute t-test per movie, channel, and window
 for m_ix = 1:numel(trial_info.video_id)
@@ -214,6 +212,7 @@ for m_ix = 1:numel(trial_info.video_id)
             bsln_vals(isnan(bsln_vals)) = [];
             
             corr.pval(m_ix,ch_ix,w_ix) = 1-(sum(corr.r2(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
+%             corr.mask2(m_ix,ch_ix,w_ix) = corr.r2(m_ix,ch_ix,w_ix) >= bsln.thresh(ch_ix);
             if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha
                 corr.mask(m_ix,ch_ix,w_ix) = 1;
             else
@@ -225,10 +224,12 @@ for m_ix = 1:numel(trial_info.video_id)
             else
                 corr.qmask(m_ix,ch_ix,w_ix) = 0;
             end
+            % Old statistical method: Test against null hypothesis corr = 0
+            %   This version is testing HFA values, not r2 (left over from SBJ05ab_HFA_actv)
 %             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
         end
         
-        % Adjust for multiple comparisons
+        % Old Method: False Discovery Rate adjustment for multiple comparisons
 %         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
 %         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
 %         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
@@ -243,7 +244,7 @@ for m_ix = 1:numel(trial_info.video_id)
     for ch_ix = 1:numel(corr.label)
         % Consolidate to binary sig/non-sig
         if any(squeeze(corr.mask(m_ix,ch_ix,:)))
-            sig_mat(ch_ix,m_ix) = 1;
+            sig_mat(ch_ix,m_ix) = sum(squeeze(corr.mask(m_ix,ch_ix,:)));
 %             % Flag whether positive or negative
 %             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
 %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
@@ -269,9 +270,9 @@ fprintf(sig_report,'%s (n = %i)\n',SBJ,numel(corr.label));
 fprintf(sig_report,['%-10s' repmat('%-10d',[1 numel(trial_info.video_id)]) '\n'],'label',trial_info.video_id);
 
 % Print summary lines (absolute)
-fprintf(sig_report,result_str, 'count', sum(sig_mat,1));
+fprintf(sig_report,result_str, 'count', sum(sig_mat>0,1));
 fprintf(sig_report,strrep(result_str,'i','.3f'), 'percent',...
-    sum(sig_mat,1)./numel(corr.label));
+    sum(sig_mat>0,1)./numel(corr.label));
 
 % Print Channel Lines
 for ch_ix = 1:numel(corr.label)

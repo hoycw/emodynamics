@@ -68,6 +68,8 @@ SBJ_vars.ch_lab.ROI        = {'all'};
 SBJ_vars.ch_lab.ref_exclude = {'LHH8', 'LTH10'}; % exclude from the CAR (less used for sEEG)
 SBJ_vars.ch_lab.bad = {...
     'RHH1','RHH2','RHH3','RTH1','RTH2','RTH3','RAM1','RAM2','RAM3','RAM4',... % Epileptic
+    'LHH8','LTH10','LAM9',...% drifting, big slow fluctuations in preproc
+    'RIN10',...% out of brain
     'xref', 'Gnd', 'E', 'DC01', 'DC04','*-1', '*-2'...
     };
 % Note: LHH8 drifting 
@@ -77,7 +79,7 @@ SBJ_vars.ch_lab.bad = {...
 
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
-SBJ_vars.ch_lab.bad_code = [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0];
+SBJ_vars.ch_lab.bad_code = [1,1,1,1,1,1,1,1,1,1,2,2,2,3,0,0,0,0,0,0,0];
 if numel(SBJ_vars.ch_lab.bad)~=numel(SBJ_vars.ch_lab.bad_code);error('bad ~= bad_code');end
 SBJ_vars.ch_lab.eeg = {'FZ','CZ','OZ','C3','C4'};
 SBJ_vars.ch_lab.eog = {'LUE','LLE','RUE','RLE'};
