@@ -1,4 +1,5 @@
 function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
+%% function SBJ08ab_HFA_corr(SBJ,an_id,stat_id)
 %   Calculates correlation with covariate in sliding windows
 %       Covariates: EKG, Rating time series
 %   Stats: alpha level of baseline correlations (fixation)
@@ -11,11 +12,8 @@ function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
 %   corr [struct] - pseudo-FT structure with main outputs
 %   st [struct] - stat params loaded via stat_id
 
-
-%%
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
 elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
-elseif exist('D:\','dir');root_dir='D:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 
 %% Set up paths
@@ -77,6 +75,7 @@ end
 % Convert bad_epochs to trial times using cov.sampleinfo
 % !!! Kuan: figure out how to get the sample number from analysis_time
 % (bad_epochs_preproc) into the time/sample from the start of each movie
+
 % Remove bad epochs
 % !!! Kuan: now you need to make the data during the epochs (adjusted to
 % trials) into NaN
@@ -123,18 +122,10 @@ for ch_ix = 1:numel(bsln_hfa.label)
             % If cov and hfa don't have NaNs, compute correlation
             if ~any(isnan(cov_data)) && ~any(isnan(hfa_data))
                 % !!! Kuan: can switch this to xcov, add lags
-                %                 % using corrcoef function
-                %                 tmp = corrcoef(hfa_data,cov_data);
-                %                 bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                %                 bsln.good_win(m_ix,w_ix) = 1;
-                %                 bsln_vals = [bsln_vals tmp(1,2)];
-                % curing crosscorr function
-                tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                tmp (1:(length(tmp)-1)/2)=[];
-                bsln.r2(m_ix,ch_ix,w_ix) = max(tmp);
+                tmp = corrcoef(hfa_data,cov_data);
+                bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
                 bsln.good_win(m_ix,w_ix) = 1;
-                bsln_vals = [bsln_vals max(tmp)];
-                bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
+                bsln_vals = [bsln_vals tmp(1,2)];
             end
         end
     end
@@ -142,14 +133,11 @@ for ch_ix = 1:numel(bsln_hfa.label)
     bsln_sort = sort(abs(bsln_vals),'descend');
     bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
 end
-
 fprintf('\n');
-fprintf('===================================================\n');
-fprintf('--------------------- Movie------------------------\n');
-fprintf('===================================================\n');
+
 %% Select data in stat window
 if strcmp(st.evnt_lab,'B')
-    %     hfa_stat = bsln;
+%     hfa_stat = bsln;
     error('Why analyze just baseline? cant test bsln vs. bsln...');
 elseif strcmp(st.evnt_lab,'M') || strcmp(st.evnt_lab,'BM')
     cfg_trim.latency = [times.bsln_len times.bsln_len+max(times.movie_len)];
@@ -216,24 +204,16 @@ for m_ix = 1:numel(trial_info.video_id)
             hfa_data = squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
             % Skip windows with bad/no data
             if ~any(isnan(hfa_data)) && ~any(isnan(cov_data))
-                
-                %                 % using corrcoef function
-                %                 tmp = corrcoef(hfa_data,cov_data);
-                %                 corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                %                 corr.good_win(m_ix,w_ix) = 1;
-                % curing crosscorr function
-                
-                tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                tmp (1:(length(tmp)-1)/2)=[];
-                corr.r2(m_ix,ch_ix,w_ix) = max(tmp);
+                tmp = corrcoef(hfa_data,cov_data);
+                corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
                 corr.good_win(m_ix,w_ix) = 1;
-                corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
             end
             % Compute one-sided test
             bsln_vals = sort(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1]),'descend');
             bsln_vals(isnan(bsln_vals)) = [];
+            
             corr.pval(m_ix,ch_ix,w_ix) = 1-(sum(corr.r2(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
-            %             corr.mask2(m_ix,ch_ix,w_ix) = corr.r2(m_ix,ch_ix,w_ix) >= bsln.thresh(ch_ix);
+%             corr.mask2(m_ix,ch_ix,w_ix) = corr.r2(m_ix,ch_ix,w_ix) >= bsln.thresh(ch_ix);
             if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha
                 corr.mask(m_ix,ch_ix,w_ix) = 1;
             else
@@ -247,15 +227,17 @@ for m_ix = 1:numel(trial_info.video_id)
             end
             % Old statistical method: Test against null hypothesis corr = 0
             %   This version is testing HFA values, not r2 (left over from SBJ05ab_HFA_actv)
-            %             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
+%             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
         end
+        
         % Old Method: False Discovery Rate adjustment for multiple comparisons
-        %         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
-        %         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
-        %         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
+%         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
+%         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
+%         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
     end
     fprintf('\n');
 end
+
 %% Print results
 % Compile positive and negative stats
 sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
@@ -264,14 +246,14 @@ for m_ix = 1:numel(trial_info.video_id)
         % Consolidate to binary sig/non-sig
         if any(squeeze(corr.mask(m_ix,ch_ix,:)))
             sig_mat(ch_ix,m_ix) = sum(squeeze(corr.mask(m_ix,ch_ix,:)));
-            %             % Flag whether positive or negative
-            %             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
-            %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
-            %                 sig_mat(m_ix,ch_ix,2) = 1;
-            %             end
-            %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))<0)
-            %                 sig_mat(m_ix,ch_ix,3) = 1;
-            %             end
+%             % Flag whether positive or negative
+%             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
+%             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
+%                 sig_mat(m_ix,ch_ix,2) = 1;
+%             end
+%             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))<0)
+%                 sig_mat(m_ix,ch_ix,3) = 1;
+%             end
         end
     end
 end
@@ -298,6 +280,7 @@ for ch_ix = 1:numel(corr.label)
     % Report on significant electrodes for this SBJ
     fprintf(sig_report,result_str,corr.label{ch_ix},sig_mat(ch_ix,:));
 end
+
 fclose(sig_report);
 
 %% Save Results
@@ -307,142 +290,4 @@ fprintf('--- Saving %s ------------------\n',out_fname);
 fprintf('===================================================\n');
 save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','sig_mat');
 
-
-%% Print results II (Kuan)
-% Load elec data from \05_recon
-elc_fname = [SBJ_vars.dirs.recon,SBJ,'_elec_main_ft_pat'];
-load(elc_fname);
-
-% Load region labels from excel spreadsheet, attach label data to elec
-[num,region_label] = xlsread([SBJ_vars.dirs.recon,SBJ,'_referenced_region.xlsx']); clear num;
-elec.gROI = region_label(2:length(elec.label)+1,13);
-loi_labels = region_label (2:length(elec.label)+1,15);
-loi_labels(find(strcmp(loi_labels,'')==1))=[];
-
-% Check that corr and elec are in same order
-if ~all(strcmp(elec.label,corr.label))
-    error('need to reorder elec and corr to have same order');
-end
-
-% Group xCorr and lag data [electrodes] by (a) movie and (2) brain regions (lobes)
-corr.gROI = elec.gROI;
-clear tmp
-clear tmp1
-clear tmp2
-for m_ix = 1:numel(trial_info.video_id)
-    for lb_ix = 1:numel(loi_labels)
-        tmp_ix = 1;
-        for ch_ix = 1: numel(corr.label)
-            if strcmp(corr.gROI(ch_ix),loi_labels(lb_ix))
-                tmp(1:size(corr.time,2),tmp_ix,lb_ix,m_ix) = squeeze(corr.r2(m_ix,ch_ix, :));
-                tmp1(1:size(corr.time,2),tmp_ix,lb_ix,m_ix) = squeeze(corr.qmask(m_ix,ch_ix, :));
-                tmp2(1:size(corr.time,2),tmp_ix,lb_ix,m_ix) = squeeze(corr.max_ix(m_ix,ch_ix, :));
-                tmp_ix = tmp_ix+1;
-            end
-        end
-    end
-end
-tmp(find(tmp==0))= NaN;
-tmp1(find(isnan(tmp)))= NaN;
-tmp2(find(isnan(tmp)))= NaN;
-
-% Group HFA data [electrodes] by (a) movie and (2) brain regions (lobes)
-for m_ix = 1:numel(trial_info.video_id)
-    for lb_ix = 1:numel(loi_labels)
-        tmp_ix = 1;
-        for ch_ix = 1: numel(corr.label)
-            if strcmp(corr.gROI(ch_ix),loi_labels(lb_ix))
-                tmp3(:,tmp_ix,lb_ix,m_ix) = squeeze(hfa_stat.powspctrm(m_ix,ch_ix, :));
-                tmp_ix = tmp_ix+1;
-            end
-        end
-    end
-end
-
-for m_ix = 1:numel(trial_info.video_id)
-    figure;
-    % Plot Regressor
-    for column_ix = 1:4
-        subplot(length(loi_labels)+1,4,column_ix);
-        if      strcmp(st.evnt_lab,'B');
-            error('Why analyze just baseline? ');
-        elseif  strcmp(st.evnt_lab,'R');
-            error('Under construction...');
-        elseif  strcmp(st.evnt_lab,'M');
-            error('Under construction...');
-        elseif  strcmp(st.evnt_lab,'MR');
-            cov_plot_data = cov.trial{m_ix};
-            cov_plot_data(1:times.bsln_len* 1000 ) = [];
-            cov_plot_data = downsample (cov_plot_data, round(size(cov_plot_data,2)/size(corr.r2,3)))
-            cov_plot_time = cov.time{m_ix};
-            cov_plot_time(1:times.bsln_len* 1000) = [];
-            cov_plot_time = downsample (cov_plot_time, round(size(cov_plot_time,2)/size(corr.r2,3)))
-        end
-        plot(cov_plot_time - times.bsln_len, cov_plot_data);
-        xlabel(''), ylabel(''), title(st.model_lab);
-        axis([-inf inf -inf inf]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % plot xcorr
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+2);
-        plot(squeeze(corr.time)- times.bsln_len, tmp(:,:,lb_ix, m_ix));hold on;
-        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[-1,1],'Color','green')
-        for event_ix = 1: size(times.event{m_ix},2)
-            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
-                times.event{m_ix}(event_ix)- times.bsln_len],...
-                [-1,1]); hold on  ;
-            line_event.Color = 'black';
-        end
-        hold off;
-        xlabel(''), ylabel('xCorr'), title(loi_labels{lb_ix});
-        axis([0 times.movie_len(m_ix)+ times.recov_len -1 1]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % plot lags
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+4);
-        plot(squeeze(corr.time)- times.bsln_len, tmp2(:,:,lb_ix, m_ix));
-        xlabel(''), ylabel('lag(ms)'), title(loi_labels{lb_ix});
-        axis([0 times.movie_len(m_ix)+ times.recov_len 0 5000]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % Plot hfa
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+1);
-        plot(hfa_stat.time-times.bsln_len,tmp3(:,:,lb_ix, m_ix));hold on;
-        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[-5,15],'Color','green')
-        for event_ix = 1: size(times.event{m_ix},2)
-            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
-                times.event{m_ix}(event_ix)- times.bsln_len],...
-                [-5,15]); hold on  ;
-            line_event.Color = 'black';
-        end
-        hold off;
-        xlabel(''), ylabel('hfa'), title(loi_labels{lb_ix});
-        axis([0 times.movie_len(m_ix)+ times.recov_len -5 10]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % Plot Sig
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+3);
-        plot(squeeze(corr.time)- times.bsln_len, tmp1(:,:,lb_ix, m_ix));hold on;
-        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[0,1],'Color','green')
-        for event_ix = 1: size(times.event{m_ix},2)
-            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
-                times.event{m_ix}(event_ix)- times.bsln_len],...
-                [0,1]); hold on  ;
-            line_event.Color = 'black';
-        end
-        hold off;
-        xlabel(''), ylabel('Sig'), title(loi_labels{lb_ix});
-        axis([0 times.movie_len(m_ix)+ times.recov_len 0 1]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % Make Figures
-    Fig=1;
-    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
-    print(Fig,Fig_fname,'-dpng', '-r900');
-    close all;
-end
 end

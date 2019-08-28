@@ -12,15 +12,18 @@ function fn_elec_import_orig(SBJ,proc_id,view_space,reg_type,reref)
 %   reref [0/1] - apply preprocessing re-referencing?
 
 % Set up paths
-[root_dir, app_dir] = fn_get_root_dir(); ft_dir = [app_dir 'fieldtrip/'];
-addpath([root_dir 'PRJ_Stroop/scripts/']);
-addpath([root_dir 'PRJ_Stroop/scripts/utils/']);
+if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
+elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
+else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
+addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);
 ft_defaults
 
 %% Load variables
-eval(['run ' root_dir 'PRJ_Stroop/scripts/SBJ_vars/' SBJ '_vars.m']);
-eval(['run ' root_dir 'PRJ_Stroop/scripts/proc_vars/' proc_id '_vars.m']);
+SBJ_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','SBJ_vars', [SBJ '_vars.m'])];
+eval(SBJ_vars_cmd);
+proc_vars_cmd = ['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars', [proc_id '_vars.m'])];
+eval(proc_vars_cmd);
 
 %% Load Elec struct
 [elec] = fn_load_elec_orig(SBJ,view_space,reg_type);

@@ -216,3 +216,11 @@ fn_compile_elec_atlas(SBJ,'main_ft','mni','v',1);
 fn_save_elec_atlas(SBJ,'main_ft','pat','','DK');
 fn_save_elec_atlas(SBJ,'main_ft','pat','','Dx');
 
+%% ========================================================================
+%   Step 6a?- May be before the previous step?
+%  ========================================================================
+% convert raw elec file from recon to bipolar re-referenced (patient and group space)
+
+fn_elec_import_orig(SBJ,'main_ft','pat','',1);
+elec.region 
+

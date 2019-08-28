@@ -16,7 +16,7 @@ end
 
 % Get file name
 elec_fname = eval(['SBJ_vars.recon.elec_' view_space reg_suffix]);
-slash = strfind(elec_fname,'/'); elec_suffix = elec_fname(slash(end)+numel(SBJ)+2:end-4);
+slash = strfind(elec_fname,filesep); elec_suffix = elec_fname(slash(end)+numel(SBJ)+2:end-4);
 
 % Load file
 tmp = load(elec_fname);

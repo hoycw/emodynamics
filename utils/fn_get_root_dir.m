@@ -9,6 +9,9 @@ elseif exist('/Volumes/hoycw_clust/','dir')
 elseif exist('G:\','dir');
     root_dir='G:\';
     app_dir='C:\Toolbox';
+elseif exist('D:\','dir');
+    root_dir='D:\';
+    app_dir='C:\Toolbox';    
 else
     error('root directory not found. where are you running this?');
 end

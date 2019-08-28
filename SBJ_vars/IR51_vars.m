@@ -45,7 +45,7 @@ SBJ_vars.dirs.raw_filename = strcat(SBJ_vars.dirs.raw,SBJ_vars.raw_file);
 % for pplotting the recons
 SBJ_vars.recon.surf_l     = [SBJ_vars.dirs.recon 'Surfaces' fullfile(filesep) SBJ_vars.SBJ '_cortex_lh.mat'];
 SBJ_vars.recon.surf_r     = [SBJ_vars.dirs.recon 'Surfaces' fullfile(filesep) SBJ_vars.SBJ '_cortex_rh.mat'];
-SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_acpc_....mat'];
+SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_acpc_f.mat'];
 SBJ_vars.recon.elec_mni_v = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_mni_v.mat'];
 SBJ_vars.recon.elec_mni_s = [];%SBJ_vars.dirs.recon 'Electrodes/' SBJ_vars.SBJ '_elec_mni_s.mat'];
 SBJ_vars.recon.fs_T1      = [SBJ_vars.dirs.recon 'Scans' fullfile(filesep) SBJ_vars.SBJ '_fs_preop_T1.mgz'];
