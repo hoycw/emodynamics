@@ -1,5 +1,5 @@
 % Parameters for HFA actvation vs. baseline
-st.model_lab = 'crEKG';
+st.model_lab = 'crRsa';
 st.trial_cond  = {'all'};
 st.evnt_lab = 'MR';
 st.stat_lim = 'all';

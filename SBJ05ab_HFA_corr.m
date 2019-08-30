@@ -1,6 +1,6 @@
 function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
 %   Calculates correlation with covariate in sliding windows
-%       Covariates: EKG, Rating time series
+%       Covariates: IBI, RSA, Rating time series
 %   Stats: alpha level of baseline correlations (fixation)
 %   Writes text report of significance
 % INPUTS:
@@ -55,11 +55,16 @@ cfgs.trl = round(cfgs.trl);
 
 %% Load Covaraites
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
-if strcmp(st.model_lab,'crEKG')
+if strcmp(st.model_lab,'crIBI')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
     cov.trial{1} = ibi_1000hz_cubic;
     % Segment to trials
     cov = ft_redefinetrial(cfgs, cov);
+elseif strcmp(st.model_lab,'crRsa')
+    load([SBJ_vars.dirs.preproc,SBJ,'_rsa_',num2str(trial_info.sample_rate),'hz.mat']);
+    cov.trial{1} = rsa_1000hz_cubic;
+    % Segment to trials
+    cov = ft_redefinetrial(cfgs, cov);      
 elseif strcmp(st.model_lab,'crRat')
     load(fullfile(root_dir,'emodynamics','data','Behavioral Data','behaviors_no film 7, with film 9 friends.mat'));
     % Segment to trials
@@ -203,6 +208,7 @@ corr.good_win  = false([numel(trial_info.video_id) size(corr.time,1)]);
 corr.pval      = nan(size(corr.r2));
 corr.qmask     = nan(size(corr.r2));
 corr.mask      = nan(size(corr.r2));
+corr.max_ix    = nan(size(corr.r2)); 
 % corr.mask2     = nan(size(corr.r2));
 
 % Compute t-test per movie, channel, and window

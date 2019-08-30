@@ -1,5 +1,5 @@
 % Parameters for HFA actvation vs. baseline
-st.model_lab = 'crEKG';
+st.model_lab = 'crIBI';
 st.trial_cond  = {'all'};
 st.evnt_lab = 'MR';
 st.stat_lim = 'all';
@@ -9,4 +9,4 @@ st.win_len  = 5.0;
 st.win_step = 1.0;
 st.alpha    = 0.05;
 
-st.win_lag = 1.0;
+st.win_lag = 3.0;
