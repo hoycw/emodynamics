@@ -57,7 +57,7 @@ cfgs.trl = round(cfgs.trl);
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
 if strcmp(st.model_lab,'crIBI')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov.trial{1} = ibi_1000hz_cubic;
+    cov.trial{1} = smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
     % Segment to trials
     cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRsa')
