@@ -57,7 +57,7 @@ cfgs.trl = round(cfgs.trl);
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
 if strcmp(st.model_lab,'crIBI')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov.trial{1} = -smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
+    cov.trial{1} = smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
     % Segment to trials
     cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRsa')
@@ -157,7 +157,6 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         end
                         
                     elseif run == 2;
-                        if strcmp(st.xcorr_method,'max')                           
                             bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
                             bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
                             bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));                                                  
@@ -170,7 +169,6 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
         % Compute threshold
         bsln_sort = sort(abs(bsln_vals),'descend');
         bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
-        end
     end
     
     fprintf('\n');
@@ -327,7 +325,7 @@ if run == 1;
     end
     
     Fig=1;
-    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_',st.xcorr_method,'_Lag Histogram']
+    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Lag Histogram']
     print(Fig,Fig_fname,'-dpng', '-r900');
     close all;
 else;
@@ -521,7 +519,7 @@ for m_ix = 1:numel(trial_info.video_id)
     end
     % Make Figures
     Fig=1;
-    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_',st.xcorr_method,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
+    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
     print(Fig,Fig_fname,'-dpng', '-r900');
     close all;
 end
