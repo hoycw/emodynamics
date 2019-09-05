@@ -1,14 +1,19 @@
 SBJ = 'IR51';
 an_id = 'HGm_zscB2t3_sm4_wn250';
-stat_id = 'crRat_MR_wl15k_ws1k_lg5k';
+stat_id = 'crIbi_MR_wl15k_ws1k_lg5k_max';
+
 
 stat_id = 'crRsa_MR_wl15k_ws1k_lg5k';
+
+
+
 stat_id = 'crIbi_MR_wl15k_ws1k_lg5k';
 
 
 
-stat_ids = {'crRat_MR_wl15k_ws1k_lg5k',...
-            'crEKG_MR_wl15k_ws1k_lg5k'};
+stat_ids = {'crIbi_MR_wl15k_ws1k_lg5k_max',...
+            'crIbi_MR_wl15k_ws1k_lg5k_min',...            
+            'crIbi_MR_wl15k_ws1k_lg5k_abs'};
 
 
 
@@ -26,7 +31,7 @@ stat_ids = {'crRat_MR_wl30k_ws3k_lg5k',...
 
 
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
-elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
+elseif exist('E:\','dir');root_dir='E:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 
 %% Set up paths

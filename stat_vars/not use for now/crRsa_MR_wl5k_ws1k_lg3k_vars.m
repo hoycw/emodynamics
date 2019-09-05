@@ -5,8 +5,13 @@ st.evnt_lab = 'MR';
 st.stat_lim = 'all';
 
 %st.n_boots  = 1000;
-st.win_len  = 15.0;
-st.win_step = 2.0;
+st.win_len  = 5.0;
+st.win_step = 1.0;
 st.alpha    = 0.05;
 
-st.win_lag = 5.0;
+st.xcorr_method = 'max';
+% st.xcorr_method = 'min';
+% st.xcorr_method = 'abs';
+
+
+st.win_lag = 3.0;

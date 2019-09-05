@@ -8,10 +8,10 @@ elseif exist('/Volumes/hoycw_clust/','dir')
     app_dir   = '/Users/colinhoy/Code/Apps/';
 elseif exist('G:\','dir');
     root_dir='G:\';
-    app_dir='C:\Toolbox';
-elseif exist('D:\','dir');
-    root_dir='D:\';
-    app_dir='C:\Toolbox';    
+    app_dir='G:\Toolbox';
+elseif exist('E:\','dir');
+    root_dir='E:\';
+    app_dir='E:\Toolbox';    
 else
     error('root directory not found. where are you running this?');
 end

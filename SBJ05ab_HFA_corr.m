@@ -14,8 +14,8 @@ function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
 
 %%
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
-elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
-elseif exist('D:\','dir');root_dir='D:\';ft_dir='C:\Toolbox\fieldtrip\';
+elseif exist('E:\','dir');root_dir='E:\';ft_dir='C:\Toolbox\fieldtrip\';
+    % elseif exist('D:\','dir');root_dir='D:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 
 %% Set up paths
@@ -57,14 +57,14 @@ cfgs.trl = round(cfgs.trl);
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
 if strcmp(st.model_lab,'crIBI')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov.trial{1} = smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
+    cov.trial{1} = -smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
     % Segment to trials
     cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRsa')
     load([SBJ_vars.dirs.preproc,SBJ,'_rsa_',num2str(trial_info.sample_rate),'hz.mat']);
     cov.trial{1} = rsa_1000hz_cubic;
     % Segment to trials
-    cov = ft_redefinetrial(cfgs, cov);      
+    cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRat')
     load(fullfile(root_dir,'emodynamics','data','Behavioral Data','behaviors_no film 7, with film 9 friends.mat'));
     % Segment to trials
@@ -86,182 +86,255 @@ end
 % !!! Kuan: now you need to make the data during the epochs (adjusted to
 % trials) into NaN
 
-%% Build null distribution
-fprintf('===================================================\n');
-fprintf('--------------------- Baselines -------------------\n');
-fprintf('===================================================\n');
-% Extract baseline data
-cfg_trim = [];
-cfg_trim.trials = 'all';
-cfg_trim.latency = [0.0 times.bsln_len];
-bsln_hfa = ft_selectdata(cfg_trim,hfa);
-bsln_cov = ft_selectdata(cfg_trim,cov);
-% bsln_cat = ft_appenddata([], bsln_hfa);
-% bsln_cat = horzcat(bsln_cat.trial{:});
-% if any(isnan(bsln_cat(:))); error('why are there nans in baseline?'); end
-
-win_lim    = fn_sliding_window_lim(squeeze(bsln_hfa.powspctrm(1,1,1,:)),...
-    round(st.win_len*trial_info.sample_rate),...
-    round(st.win_step*trial_info.sample_rate));
-
-% Build distribution of window averages
-% Create structure for baseline corr in fieldtrip style
-bsln.label     = bsln_hfa.label;
-bsln.dimord    = 'rpt_chan_time';
-bsln.time      = bsln_hfa.time(round(mean(win_lim,2)));
-bsln.r2        = nan([size(bsln_hfa.powspctrm,1) size(bsln_hfa.powspctrm,2) size(win_lim,1)]);
-bsln.win_lim   = win_lim;
-bsln.win_lim_s = bsln_hfa.time(win_lim);
-bsln.good_win  = false([numel(trial_info.video_id) size(bsln.time,1)]);
-bsln.thresh    = nan(size(bsln.label));
-
-fprintf('Building baseline distribution...\n\t');
-for ch_ix = 1:numel(bsln_hfa.label)
-    fprintf('%d..',ch_ix);
-    if mod(ch_ix,30)==0; fprintf('\n\t'); end
-    bsln_vals = [];
-    for m_ix = 1:numel(trial_info.video_id)
-        % Average HFA per window
-        for w_ix = 1:size(win_lim,1)
-            cov_data = squeeze(bsln_cov.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
-            hfa_data = squeeze(bsln_hfa.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
-            % If cov and hfa don't have NaNs, compute correlation
-            if ~any(isnan(cov_data)) && ~any(isnan(hfa_data))
-                % !!! Kuan: can switch this to xcov, add lags
-                %                 % using corrcoef function
-                %                 tmp = corrcoef(hfa_data,cov_data);
-                %                 bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                %                 bsln.good_win(m_ix,w_ix) = 1;
-                %                 bsln_vals = [bsln_vals tmp(1,2)];
-                % curing crosscorr function
-                tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                tmp (1:(length(tmp)-1)/2)=[];
-                bsln.r2(m_ix,ch_ix,w_ix) = max(tmp);
-                bsln.good_win(m_ix,w_ix) = 1;
-                bsln_vals = [bsln_vals max(tmp)];
-                bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
-            end
-        end
-    end
-    % Compute threshold
-    bsln_sort = sort(abs(bsln_vals),'descend');
-    bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
-end
-
-fprintf('\n');
-fprintf('===================================================\n');
-fprintf('--------------------- Movie------------------------\n');
-fprintf('===================================================\n');
-%% Select data in stat window
-if strcmp(st.evnt_lab,'B')
-    %     hfa_stat = bsln;
-    error('Why analyze just baseline? cant test bsln vs. bsln...');
-elseif strcmp(st.evnt_lab,'M') || strcmp(st.evnt_lab,'BM')
-    cfg_trim.latency = [times.bsln_len times.bsln_len+max(times.movie_len)];
-    if strcmp(st.evnt_lab,'BM')
-        cfg_trim.latency(1) = 0;
-    end
-    hfa_stat = ft_selectdata(cfg_trim,hfa);
-    cov_stat = ft_selectdata(cfg_trim,cov);
-    % NaN out non-movie data for shorter movies
-    for m_ix = 1:numel(times.movie_len)
-        if trial_info.video_id(m_ix)~=8
-            time_idx = hfa_stat.time > times.bsln_len+times.movie_len(trial_info.video_id(m_ix));
-            hfa_stat.powspctrm(m_ix,:,1,time_idx) = nan([size(hfa_stat.powspctrm,2) sum(time_idx)]);
-            cov_stat.trial{m_ix}(1,time_idx) = nan([1 sum(time_idx)]);
-        end
-    end
-elseif strcmp(st.evnt_lab,'R')
-    error('need to write code for realigning data to have no nans');
-elseif strcmp(st.evnt_lab,'MR')
-    cfg_trim.latency = [times.bsln_len hfa.time(end)];
-    hfa_stat = ft_selectdata(cfg_trim,hfa);
-    cov_stat = ft_selectdata(cfg_trim,cov);
-elseif strcmp(st.evnt_lab,'BMR')
-    hfa_stat = hfa;
-    cov_stat = cov;
-elseif strcmp(st.evnt_lab,'BR')
-    error('why include non-consecutive events baseline and recovery?');
-else
-    error(['Unknown st.evnt_lab ' st.evnt_lab]);
-end
-
-%% Compute Window Parameters
-win_lim    = fn_sliding_window_lim(squeeze(hfa_stat.powspctrm(1,1,1,:)),...
-    round(st.win_len*trial_info.sample_rate),...
-    round(st.win_step*trial_info.sample_rate));
-win_center = round(mean(win_lim,2));
-
-%% Run Statistics
-fprintf('===================================================\n');
-fprintf('--------------------- Statistics ------------------\n');
-fprintf('===================================================\n');
-
-% Create structure for corr in fieldtrip style
-corr.label     = hfa_stat.label;
-corr.dimord    = 'rpt_chan_time';
-corr.time      = hfa_stat.time(win_center);
-corr.r2        = nan([size(hfa_stat.powspctrm,1) size(hfa_stat.powspctrm,2) size(win_lim,1)]);
-corr.win_lim   = win_lim;
-corr.win_lim_s = hfa_stat.time(win_lim);
-corr.good_win  = false([numel(trial_info.video_id) size(corr.time,1)]);
-corr.pval      = nan(size(corr.r2));
-corr.qmask     = nan(size(corr.r2));
-corr.mask      = nan(size(corr.r2));
-corr.max_ix    = nan(size(corr.r2)); 
-% corr.mask2     = nan(size(corr.r2));
-
-% Compute t-test per movie, channel, and window
-for m_ix = 1:numel(trial_info.video_id)
-    fprintf('Movie %d/%d Stats...\n\t',m_ix,numel(trial_info.video_id));
-    for ch_ix = 1:numel(hfa_stat.label)
-        if mod(ch_ix,30)==0; fprintf('\n\t'); end
+for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
+    
+    %% Build null distribution
+    fprintf('===================================================\n');
+    fprintf('--------------------- Baselines -------------------\n');
+    fprintf('===================================================\n');
+    % Extract baseline data
+    cfg_trim = [];
+    cfg_trim.trials = 'all';
+    cfg_trim.latency = [0.0 times.bsln_len];
+    bsln_hfa = ft_selectdata(cfg_trim,hfa);
+    bsln_cov = ft_selectdata(cfg_trim,cov);
+    % bsln_cat = ft_appenddata([], bsln_hfa);
+    % bsln_cat = horzcat(bsln_cat.trial{:});
+    % if any(isnan(bsln_cat(:))); error('why are there nans in baseline?'); end
+    
+    win_lim    = fn_sliding_window_lim(squeeze(bsln_hfa.powspctrm(1,1,1,:)),...
+        round(st.win_len*trial_info.sample_rate),...
+        round(st.win_step*trial_info.sample_rate));
+    
+    % Build distribution of window averages
+    % Create structure for baseline corr in fieldtrip style
+    bsln.label     = bsln_hfa.label;
+    bsln.dimord    = 'rpt_chan_time';
+    bsln.time      = bsln_hfa.time(round(mean(win_lim,2)));
+    bsln.r2        = nan([size(bsln_hfa.powspctrm,1) size(bsln_hfa.powspctrm,2) size(win_lim,1)]);
+    bsln.win_lim   = win_lim;
+    bsln.win_lim_s = bsln_hfa.time(win_lim);
+    bsln.good_win  = false([numel(trial_info.video_id) size(bsln.time,1)]);
+    bsln.thresh    = nan(size(bsln.label));
+    
+    
+    fprintf('Building baseline distribution...\n\t');
+    for ch_ix = 1:numel(bsln_hfa.label)
         fprintf('%d..',ch_ix);
-        for w_ix = 1:size(win_lim,1)
-            cov_data = squeeze(cov_stat.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
-            hfa_data = squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
-            % Skip windows with bad/no data
-            if ~any(isnan(hfa_data)) && ~any(isnan(cov_data))
-                
-                %                 % using corrcoef function
-                %                 tmp = corrcoef(hfa_data,cov_data);
-                %                 corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
-                %                 corr.good_win(m_ix,w_ix) = 1;
-                % curing crosscorr function
-                
-                tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                tmp (1:(length(tmp)-1)/2)=[];
-                corr.r2(m_ix,ch_ix,w_ix) = max(tmp);
-                corr.good_win(m_ix,w_ix) = 1;
-                corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
+        if mod(ch_ix,30)==0; fprintf('\n\t'); end
+        bsln_vals = [];
+        for m_ix = 1:numel(trial_info.video_id)
+            % Average HFA per window
+            for w_ix = 1:size(win_lim,1)
+                cov_data = squeeze(bsln_cov.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
+                hfa_data = squeeze(bsln_hfa.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
+                % If cov and hfa don't have NaNs, compute correlation
+                if ~any(isnan(cov_data)) && ~any(isnan(hfa_data))
+                    % !!! Kuan: can switch this to xcov, add lags
+                    %                 % using corrcoef function
+                    %                 tmp = corrcoef(hfa_data,cov_data);
+                    %                 bsln.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
+                    %                 bsln.good_win(m_ix,w_ix) = 1;
+                    %                 bsln_vals = [bsln_vals tmp(1,2)];
+                    % curing crosscorr function
+                    
+                    tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
+                    tmp (1:(length(tmp)-1)/2)=[];
+                    
+                    if run == 1;
+                        if strcmp(st.xcorr_method,'max')                         
+                            bsln.r2(m_ix,ch_ix,w_ix) = max(tmp);
+                            bsln_vals = [bsln_vals max(tmp)];
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));                            
+                        elseif strcmp(st.xcorr_method,'min')                            
+                            bsln.r2(m_ix,ch_ix,w_ix) = min(tmp);
+                            bsln_vals = [bsln_vals min(tmp)];
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));                            
+                        elseif strcmp(st.xcorr_method,'abs')
+                            bsln.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
+                            bsln_vals = [bsln_vals max(abs(tmp))];
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));                                                        
+                        end
+                        
+                    elseif run == 2;
+                        if strcmp(st.xcorr_method,'max')                           
+                            bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
+                            bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));                                                  
+                    end
+                    
+                    bsln.good_win(m_ix,w_ix) = 1;
+                end
             end
-            % Compute one-sided test
-            bsln_vals = sort(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1]),'descend');
-            bsln_vals(isnan(bsln_vals)) = [];
-            corr.pval(m_ix,ch_ix,w_ix) = 1-(sum(corr.r2(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
-            %             corr.mask2(m_ix,ch_ix,w_ix) = corr.r2(m_ix,ch_ix,w_ix) >= bsln.thresh(ch_ix);
-            if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha
-                corr.mask(m_ix,ch_ix,w_ix) = 1;
-            else
-                corr.mask(m_ix,ch_ix,w_ix) = 0;
-            end
-            % Correct for multiple comparisons
-            if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha/size(win_lim,1)
-                corr.qmask(m_ix,ch_ix,w_ix) = 1;
-            else
-                corr.qmask(m_ix,ch_ix,w_ix) = 0;
-            end
-            % Old statistical method: Test against null hypothesis corr = 0
-            %   This version is testing HFA values, not r2 (left over from SBJ05ab_HFA_actv)
-            %             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
         end
-        % Old Method: False Discovery Rate adjustment for multiple comparisons
-        %         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
-        %         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
-        %         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
+        % Compute threshold
+        bsln_sort = sort(abs(bsln_vals),'descend');
+        bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
+        end
     end
+    
     fprintf('\n');
+    fprintf('===================================================\n');
+    fprintf('--------------------- Movie------------------------\n');
+    fprintf('===================================================\n');
+    %% Select data in stat window
+    if strcmp(st.evnt_lab,'B')
+        %     hfa_stat = bsln;
+        error('Why analyze just baseline? cant test bsln vs. bsln...');
+    elseif strcmp(st.evnt_lab,'M') || strcmp(st.evnt_lab,'BM')
+        cfg_trim.latency = [times.bsln_len times.bsln_len+max(times.movie_len)];
+        if strcmp(st.evnt_lab,'BM')
+            cfg_trim.latency(1) = 0;
+        end
+        hfa_stat = ft_selectdata(cfg_trim,hfa);
+        cov_stat = ft_selectdata(cfg_trim,cov);
+        % NaN out non-movie data for shorter movies
+        for m_ix = 1:numel(times.movie_len)
+            if trial_info.video_id(m_ix)~=8
+                time_idx = hfa_stat.time > times.bsln_len+times.movie_len(trial_info.video_id(m_ix));
+                hfa_stat.powspctrm(m_ix,:,1,time_idx) = nan([size(hfa_stat.powspctrm,2) sum(time_idx)]);
+                cov_stat.trial{m_ix}(1,time_idx) = nan([1 sum(time_idx)]);
+            end
+        end
+    elseif strcmp(st.evnt_lab,'R')
+        error('need to write code for realigning data to have no nans');
+    elseif strcmp(st.evnt_lab,'MR')
+        cfg_trim.latency = [times.bsln_len hfa.time(end)];
+        hfa_stat = ft_selectdata(cfg_trim,hfa);
+        cov_stat = ft_selectdata(cfg_trim,cov);
+    elseif strcmp(st.evnt_lab,'BMR')
+        hfa_stat = hfa;
+        cov_stat = cov;
+    elseif strcmp(st.evnt_lab,'BR')
+        error('why include non-consecutive events baseline and recovery?');
+    else
+        error(['Unknown st.evnt_lab ' st.evnt_lab]);
+    end
+    
+    %% Compute Window Parameters
+    win_lim    = fn_sliding_window_lim(squeeze(hfa_stat.powspctrm(1,1,1,:)),...
+        round(st.win_len*trial_info.sample_rate),...
+        round(st.win_step*trial_info.sample_rate));
+    win_center = round(mean(win_lim,2));
+    
+    %% Run Statistics
+    fprintf('===================================================\n');
+    fprintf('--------------------- Statistics ------------------\n');
+    fprintf('===================================================\n');
+    
+    % Create structure for corr in fieldtrip style
+    corr.label     = hfa_stat.label;
+    corr.dimord    = 'rpt_chan_time';
+    corr.time      = hfa_stat.time(win_center);
+    corr.r2        = nan([size(hfa_stat.powspctrm,1) size(hfa_stat.powspctrm,2) size(win_lim,1)]);
+    corr.win_lim   = win_lim;
+    corr.win_lim_s = hfa_stat.time(win_lim);
+    corr.good_win  = false([numel(trial_info.video_id) size(corr.time,1)]);
+    corr.pval      = nan(size(corr.r2));
+    corr.qmask     = nan(size(corr.r2));
+    corr.mask      = nan(size(corr.r2));
+    corr.max_ix    = nan(size(corr.r2));
+    % corr.mask2     = nan(size(corr.r2));
+    
+    % Compute t-test per movie, channel, and window
+    for m_ix = 1:numel(trial_info.video_id)
+        fprintf('Movie %d/%d Stats...\n\t',m_ix,numel(trial_info.video_id));
+        for ch_ix = 1:numel(hfa_stat.label)
+            if mod(ch_ix,30)==0; fprintf('\n\t'); end
+            fprintf('%d..',ch_ix);
+            for w_ix = 1:size(win_lim,1)
+                cov_data = squeeze(cov_stat.trial{m_ix}(1,win_lim(w_ix,1):win_lim(w_ix,2)))';
+                hfa_data = squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2)));
+                % Skip windows with bad/no data
+                if ~any(isnan(hfa_data)) && ~any(isnan(cov_data))
+                    
+                    %                 % using corrcoef function
+                    %                 tmp = corrcoef(hfa_data,cov_data);
+                    %                 corr.r2(m_ix,ch_ix,w_ix) = tmp(1,2);
+                    %                 corr.good_win(m_ix,w_ix) = 1;
+                    % curing crosscorr function
+                    
+                    tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
+                    tmp (1:(length(tmp)-1)/2)=[];
+                    
+                    if run == 1;
+                        if strcmp(st.xcorr_method,'max')
+                            corr.r2(m_ix,ch_ix,w_ix) = max(tmp);
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));                            
+                        elseif strcmp(st.xcorr_method,'min')
+                            corr.r2(m_ix,ch_ix,w_ix) = min(tmp);
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));                            
+                        elseif strcmp(st.xcorr_method,'abs')                         
+                            corr.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));    
+                        end                        
+
+                    elseif run == 2;
+                        corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
+                        corr.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
+                    end
+                    
+                    corr.good_win(m_ix,w_ix) = 1;
+                end
+                
+                
+                
+                
+                
+                % Compute one-sided test
+                bsln_vals = sort(reshape(bsln.r2(:,ch_ix,:),[size(bsln.r2,1)*size(bsln.r2,3) 1]),'descend');
+                bsln_vals(isnan(bsln_vals)) = [];
+                corr.pval(m_ix,ch_ix,w_ix) = 1-(sum(corr.r2(m_ix,ch_ix,w_ix)>bsln_vals)/numel(bsln_vals));
+                %             corr.mask2(m_ix,ch_ix,w_ix) = corr.r2(m_ix,ch_ix,w_ix) >= bsln.thresh(ch_ix);
+                if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha
+                    corr.mask(m_ix,ch_ix,w_ix) = 1;
+                else
+                    corr.mask(m_ix,ch_ix,w_ix) = 0;
+                end
+                % Correct for multiple comparisons
+                if corr.pval(m_ix,ch_ix,w_ix)<=st.alpha/size(win_lim,1)
+                    corr.qmask(m_ix,ch_ix,w_ix) = 1;
+                else
+                    corr.qmask(m_ix,ch_ix,w_ix) = 0;
+                end
+                % Old statistical method: Test against null hypothesis corr = 0
+                %   This version is testing HFA values, not r2 (left over from SBJ05ab_HFA_actv)
+                %             [~, corr.pval(m_ix,ch_ix,w_ix)] = ttest(squeeze(hfa_stat.powspctrm(m_ix,ch_ix,1,win_lim(w_ix,1):win_lim(w_ix,2))));
+            end
+            % Old Method: False Discovery Rate adjustment for multiple comparisons
+            %         good_idx = ~isnan(corr.pval(m_ix,ch_ix,:));
+            %         [~, ~, ~, corr.qval(m_ix,ch_ix,good_idx)] = fdr_bh(corr.pval(m_ix,ch_ix,good_idx));
+            %         corr.mask(m_ix,ch_ix,good_idx) = corr.qval(m_ix,ch_ix,good_idx)<=st.alpha;
+        end
+        fprintf('\n');
+    end
+    
+
+% Find the optimal lag for each channel (across film and baseline of all 8 trials)
+if run == 1;
+    for ch_ix = 1: numel(corr.label)
+        max_ix_mov(:, ch_ix) = reshape(corr.max_ix (:,ch_ix,:),[],1) ;
+        max_ix_bsln(:, ch_ix) = reshape(bsln.max_ix (:,ch_ix,:),[],1) ;
+    end
+    
+    max_ix_all = cat(1,max_ix_bsln, max_ix_mov);
+    
+    for ch_ix = 1: numel(corr.label)
+        subplot(ceil(numel(corr.label)/10),10,ch_ix);
+        histogram(max_ix_all (:,ch_ix));
+        set(gca,'FontSize',3) ;
+        title(corr.label{ch_ix});
+    end
+    
+    Fig=1;
+    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_',st.xcorr_method,'_Lag Histogram']
+    print(Fig,Fig_fname,'-dpng', '-r900');
+    close all;
+else;
+end;    
+    
 end
+
 %% Print results
 % Compile positive and negative stats
 sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
@@ -281,6 +354,7 @@ for m_ix = 1:numel(trial_info.video_id)
         end
     end
 end
+
 
 % Prep report
 sig_report_fname = [hfa_fname(1:end-4) '_' stat_id '_sig_report.txt'];
@@ -447,7 +521,7 @@ for m_ix = 1:numel(trial_info.video_id)
     end
     % Make Figures
     Fig=1;
-    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
+    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_',st.xcorr_method,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
     print(Fig,Fig_fname,'-dpng', '-r900');
     close all;
 end
