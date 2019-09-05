@@ -336,11 +336,18 @@ end
 %% Print results
 % Compile positive and negative stats
 sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
+xcorr_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
+
+
 for m_ix = 1:numel(trial_info.video_id)
     for ch_ix = 1:numel(corr.label)
         % Consolidate to binary sig/non-sig
-        if any(squeeze(corr.mask(m_ix,ch_ix,:)))
-            sig_mat(ch_ix,m_ix) = sum(squeeze(corr.mask(m_ix,ch_ix,:)));
+        if any(squeeze(corr.qmask(m_ix,ch_ix,:)))
+            sig_mat(ch_ix,m_ix) = sum(squeeze(corr.qmask(m_ix,ch_ix,...
+                find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
+            xcorr_mat(ch_ix,m_ix) = nanmean(squeeze(corr.r2(m_ix,ch_ix,...
+                find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
+            
             %             % Flag whether positive or negative
             %             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
             %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
@@ -352,6 +359,7 @@ for m_ix = 1:numel(trial_info.video_id)
         end
     end
 end
+
 
 
 % Prep report
@@ -523,4 +531,14 @@ for m_ix = 1:numel(trial_info.video_id)
     print(Fig,Fig_fname,'-dpng', '-r900');
     close all;
 end
+
+% Print Statistical Result Summary
+elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
+Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,sig_mat)
+Fig_nSig.Colormap = parula;
+
+elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
+Fig_xCorr = heatmap(times.movie_names,elec.gROIwlabel,xcorr_mat)
+Fig_xCorr.Colormap = parula;
+
 end
