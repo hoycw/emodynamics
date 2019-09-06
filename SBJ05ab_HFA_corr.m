@@ -72,7 +72,11 @@ elseif strcmp(st.model_lab,'crRat')
     % Add in Rating data
     for m_ix = 1:numel(trial_info.video_id)
         cov.trial{m_ix} = nan(size(cov.trial{m_ix}));
+        if m_ix == 2| m_ix == 8; 
         cov.trial{m_ix}(1,1:numel(export_normative{m_ix})) = export_normative{m_ix};
+        else
+        cov.trial{m_ix}(1,1:numel(export_normative{m_ix})) = -export_normative{m_ix};    
+        end;
     end
 else
     error(['Unknown st.model_lab: ' st.model_lab]);
@@ -153,7 +157,7 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         elseif strcmp(st.xcorr_method,'abs')
                             bsln.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
                             bsln_vals = [bsln_vals max(abs(tmp))];
-                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(abs(tmp) == max(abs(tmp)));
                         end
                         
                     elseif run == 2;
@@ -264,7 +268,7 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                             corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));
                         elseif strcmp(st.xcorr_method,'abs')
                             corr.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
-                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(abs(tmp) == max(abs(tmp)));
                         end
                         
                     elseif run == 2;
