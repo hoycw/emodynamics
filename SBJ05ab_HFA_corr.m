@@ -142,24 +142,24 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                     tmp (1:(length(tmp)-1)/2)=[];
                     
                     if run == 1;
-                        if strcmp(st.xcorr_method,'max')                         
+                        if strcmp(st.xcorr_method,'max')
                             bsln.r2(m_ix,ch_ix,w_ix) = max(tmp);
                             bsln_vals = [bsln_vals max(tmp)];
-                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));                            
-                        elseif strcmp(st.xcorr_method,'min')                            
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
+                        elseif strcmp(st.xcorr_method,'min')
                             bsln.r2(m_ix,ch_ix,w_ix) = min(tmp);
                             bsln_vals = [bsln_vals min(tmp)];
-                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));                            
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));
                         elseif strcmp(st.xcorr_method,'abs')
                             bsln.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
                             bsln_vals = [bsln_vals max(abs(tmp))];
-                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));                                                        
+                            bsln.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));
                         end
                         
                     elseif run == 2;
-                            bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
-                            bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
-                            bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));                                                  
+                        bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
+                        bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
+                        bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
                     end
                     
                     bsln.good_win(m_ix,w_ix) = 1;
@@ -258,15 +258,15 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                     if run == 1;
                         if strcmp(st.xcorr_method,'max')
                             corr.r2(m_ix,ch_ix,w_ix) = max(tmp);
-                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));                            
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(tmp));
                         elseif strcmp(st.xcorr_method,'min')
                             corr.r2(m_ix,ch_ix,w_ix) = min(tmp);
-                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));                            
-                        elseif strcmp(st.xcorr_method,'abs')                         
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == min(tmp));
+                        elseif strcmp(st.xcorr_method,'abs')
                             corr.r2(m_ix,ch_ix,w_ix) = max(abs(tmp));
-                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));    
-                        end                        
-
+                            corr.max_ix (m_ix,ch_ix,w_ix)= find(tmp == max(abs(tmp)));
+                        end
+                        
                     elseif run == 2;
                         corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
                         corr.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
@@ -307,29 +307,29 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
         fprintf('\n');
     end
     
-
-% Find the optimal lag for each channel (across film and baseline of all 8 trials)
-if run == 1;
-    for ch_ix = 1: numel(corr.label)
-        max_ix_mov(:, ch_ix) = reshape(corr.max_ix (:,ch_ix,:),[],1) ;
-        max_ix_bsln(:, ch_ix) = reshape(bsln.max_ix (:,ch_ix,:),[],1) ;
-    end
     
-    max_ix_all = cat(1,max_ix_bsln, max_ix_mov);
-    
-    for ch_ix = 1: numel(corr.label)
-        subplot(ceil(numel(corr.label)/10),10,ch_ix);
-        histogram(max_ix_all (:,ch_ix));
-        set(gca,'FontSize',3) ;
-        title(corr.label{ch_ix});
-    end
-    
-    Fig=1;
-    Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Lag Histogram']
-    print(Fig,Fig_fname,'-dpng', '-r900');
-    close all;
-else;
-end;    
+    % Find the optimal lag for each channel (across film and baseline of all 8 trials)
+    if run == 1;
+        for ch_ix = 1: numel(corr.label)
+            max_ix_mov(:, ch_ix) = reshape(corr.max_ix (:,ch_ix,:),[],1) ;
+            max_ix_bsln(:, ch_ix) = reshape(bsln.max_ix (:,ch_ix,:),[],1) ;
+        end
+        
+        max_ix_all = cat(1,max_ix_bsln, max_ix_mov);
+        
+        for ch_ix = 1: numel(corr.label)
+            subplot(ceil(numel(corr.label)/10),10,ch_ix);
+            histogram(max_ix_all (:,ch_ix));
+            set(gca,'FontSize',3) ;
+            title(corr.label{ch_ix});
+        end
+        
+        Fig=1;
+        Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Lag Histogram']
+        print(Fig,Fig_fname,'-dpng', '-r900');
+        close all;
+    else;
+    end;
     
 end
 
@@ -536,9 +536,18 @@ end
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
 Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,sig_mat)
 Fig_nSig.Colormap = parula;
+Fig=1;
+Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_Sigs']
+print(Fig,Fig_fname,'-dpng', '-r900');
+close all; 
 
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
 Fig_xCorr = heatmap(times.movie_names,elec.gROIwlabel,xcorr_mat)
 Fig_xCorr.Colormap = parula;
+Fig=1;
+Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_xCorr']
+print(Fig,Fig_fname,'-dpng', '-r900');
+close all; 
+
 
 end
