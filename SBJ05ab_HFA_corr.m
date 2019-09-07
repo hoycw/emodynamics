@@ -540,6 +540,7 @@ end
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
 Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,sig_mat)
 Fig_nSig.Colormap = parula;
+set(gca,'FontSize',3) ;
 Fig=1;
 Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_Sigs']
 print(Fig,Fig_fname,'-dpng', '-r900');
@@ -548,6 +549,7 @@ close all;
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
 Fig_xCorr = heatmap(times.movie_names,elec.gROIwlabel,xcorr_mat)
 Fig_xCorr.Colormap = parula;
+set(gca,'FontSize',3) ;
 Fig=1;
 Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_xCorr']
 print(Fig,Fig_fname,'-dpng', '-r900');

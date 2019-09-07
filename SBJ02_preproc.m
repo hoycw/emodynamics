@@ -12,7 +12,7 @@ psd_fig_type = 'jpg';
 
 % Directories
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
-elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip\';
+elseif exist('E:\','dir');root_dir='E:\';ft_dir='C:\Toolbox\fieldtrip\';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 addpath(fullfile(root_dir,'emodynamics','scripts','utils'));
 addpath(ft_dir);

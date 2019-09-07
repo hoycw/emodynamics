@@ -6,7 +6,7 @@ clear all; close all;
 
 %% Check which root directory
 if exist('/home/knight/','dir');root_dir='/home/knight/';ft_dir=[root_dir 'hoycw/Apps/fieldtrip/'];
-elseif exist('G:\','dir');root_dir='G:\';ft_dir='C:\Toolbox\fieldtrip';
+elseif exist('E:\','dir');root_dir='E:\';ft_dir='C:\Toolbox\fieldtrip';
 else root_dir='/Volumes/hoycw_clust/';ft_dir='/Users/colinhoy/Code/Apps/fieldtrip/';end
 
 %% Set Up Directories
@@ -16,7 +16,7 @@ addpath(ft_dir);
 ft_defaults
 
 %% Step 0 - Processing Variables
-SBJ = 'IR51';
+SBJ = 'IR77';
 proc_id = 'main_ft';
 eval(['run ' fullfile(root_dir,'emodynamics','scripts','proc_vars',[proc_id '_vars.m'])]);
 
@@ -133,6 +133,8 @@ if isfield(data,'sampleinfo')   % the data.sample_info field can mess up the vie
     data = rmfield(data,'sampleinfo');
 end
 out = ft_databrowser(cfg_plot,data);
+% adjust font size if needed
+cfg_plot.fontsize = 6;  
 
 % Save out the bad_epochs from the preprocessed data
 bad_epochs = out.artfctdef.visual.artifact;
