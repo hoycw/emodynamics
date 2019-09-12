@@ -43,7 +43,7 @@ else
 end
 
 % To know the time of analyses (get task onset and offset time from photodiode and speaker)
-load(fullfile('G:','emodynamics','scripts','utils','cfg_plot.mat'))
+load(fullfile('E:','emodynamics','scripts','utils','cfg_plot.mat'))
 ft_databrowser(cfg_plot,data)
 
 %% ========================================================================
@@ -224,5 +224,4 @@ fn_save_elec_atlas(SBJ,'main_ft','pat','','Dx');
 % convert raw elec file from recon to bipolar re-referenced (patient and group space)
 
 fn_elec_import_orig(SBJ,'main_ft','pat','',1);
-elec.region 
 

@@ -273,7 +273,7 @@ for b_ix = 1:numel(SBJ_vars.block_name)
             elseif any(strcmp(ekg.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1)))
                 ekg.label(strcmp(ekg.label,SBJ_vars.ch_lab.mislabel{ch_ix}(1))) = SBJ_vars.ch_lab.mislabel{ch_ix}(2);
             else
-                error(['Could not find mislabeled channel: ' SBJ_vars.ch_lab.mislabel{ch_ix}(1)]);
+                error(['Could not find mislabeled channel']);
             end
         end
     end

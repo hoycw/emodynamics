@@ -45,7 +45,7 @@ SBJ_vars.dirs.raw_filename = strcat(SBJ_vars.dirs.raw,SBJ_vars.raw_file);
 % for pplotting the recons
 SBJ_vars.recon.surf_l     = [SBJ_vars.dirs.recon 'Surfaces' fullfile(filesep) SBJ_vars.SBJ '_cortex_lh.mat'];
 SBJ_vars.recon.surf_r     = [SBJ_vars.dirs.recon 'Surfaces' fullfile(filesep) SBJ_vars.SBJ '_cortex_rh.mat'];
-SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_acpc_....mat'];
+SBJ_vars.recon.elec_pat   = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_acpc_f.mat'];
 SBJ_vars.recon.elec_mni_v = [SBJ_vars.dirs.recon 'Electrodes' fullfile(filesep) SBJ_vars.SBJ '_elec_mni_v.mat'];
 SBJ_vars.recon.elec_mni_s = [];%SBJ_vars.dirs.recon 'Electrodes/' SBJ_vars.SBJ '_elec_mni_s.mat'];
 SBJ_vars.recon.fs_T1      = [SBJ_vars.dirs.recon 'Scans' fullfile(filesep) SBJ_vars.SBJ '_fs_preop_T1.mgz'];
@@ -78,11 +78,14 @@ SBJ_vars.ch_lab.mislabel = {{'2IN1','PIN1'},{'2IN2','PIN2'},{'2IN3','PIN3'},{'2I
 
 
 SBJ_vars.ch_lab.ref_exclude = {'LAM9','RTH4'...
-                                'LSM7','LSM8','LSM9','LSM10','LHH4','2IN9','2IN10'}; % exclude from the CAR (less used for sEEG)
-SBJ_vars.ch_lab.bad = {'REF','E','Z','DC02','DC03','DC04'};
+                               'LHH4'}; % exclude from the CAR (less used for sEEG)
+SBJ_vars.ch_lab.bad = {'REF','E','Z','DC02','DC03','DC04'...
+                        ,'LIN7','LIN8','LIN9','LIN10'...
+                        ,'LHH10'... suspect out of brain (high frequency noise)
+                         ,'LSM7','LSM8','LSM9','LSM10','2IN9','2IN10'};% out of brain
 % bad_codes: 1 = toss (epileptic or bad); 2 = suspicious; 3 = out of brain; 0 = junk
 SBJ_vars.ch_lab.bad_type = {'bad','sus','out'};
-SBJ_vars.ch_lab.bad_code = [0,0,0,0,0,0];
+SBJ_vars.ch_lab.bad_code = [0,0,0,0,0,0,1,1,1,1,2,3,3,3,3,3,3];
 if numel(SBJ_vars.ch_lab.bad)~=numel(SBJ_vars.ch_lab.bad_code);error('bad ~= bad_code');end
 SBJ_vars.ch_lab.eeg = {'FZ', 'CZ', 'OZ', 'C3', 'C4'};
 SBJ_vars.ch_lab.eog = {'LUC', 'LLC', 'RUC', 'RLC'};
