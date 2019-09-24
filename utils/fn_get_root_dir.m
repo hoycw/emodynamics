@@ -6,9 +6,6 @@ if exist('/home/knight/','dir')
 elseif exist('/Volumes/hoycw_clust/','dir')
     root_dir = '/Volumes/hoycw_clust/';
     app_dir   = '/Users/colinhoy/Code/Apps/';
-elseif exist('G:\','dir');
-    root_dir='G:\';
-    app_dir='G:\Toolbox';
 elseif exist('E:\','dir');
     root_dir='E:\';
     app_dir='E:\Toolbox';    

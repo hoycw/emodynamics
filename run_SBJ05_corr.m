@@ -1,12 +1,16 @@
 
 
 
-SBJ = 'IR51';
+SBJ = 'IR77';
 an_id = 'HGm_zscB2t3_sm4_wn250';
-stat_id = 'crRat_MR_wl15k_ws1k_lg5k_max';
+stat_id = 'crIbi_MR_wl15k_ws1k_lg5k_abs';
 
 
 
+
+SBJ = 'IR77';
+an_id = 'HGm_zscB2t3_sm4_wn250';
+stat_ids = {'crRat_MR_wl15k_ws1k_lg5k_abs'};
 
 
 
