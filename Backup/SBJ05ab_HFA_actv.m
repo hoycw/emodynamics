@@ -51,8 +51,8 @@ bsln_hfa = ft_selectdata(cfg_trim,hfa);
 % if any(isnan(bsln_cat(:))); error('why are there nans in baseline?'); end
 
 win_lim    = fn_sliding_window_lim(squeeze(bsln_hfa.powspctrm(1,1,1,:)),...
-    round(st.actvwin_len*trial_info.sample_rate),...
-    round(st.actvwin_step*trial_info.sample_rate));
+    round(st.actv.win_len*trial_info.sample_rate),...
+    round(st.actv.win_step*trial_info.sample_rate));
 
 % Build distribution of window averages
 % Create structure for actv in fieldtrip style
@@ -115,8 +115,8 @@ end
 
 %% Compute Window Parameters
 win_lim    = fn_sliding_window_lim(squeeze(hfa_stat.powspctrm(1,1,1,:)),...
-    round(st.actvwin_len*trial_info.sample_rate),...
-    round(st.actvwin_step*trial_info.sample_rate));
+    round(st.actv.win_len*trial_info.sample_rate),...
+    round(st.actv.win_step*trial_info.sample_rate));
 win_center = round(mean(win_lim,2));
 
 %% Run Statistics

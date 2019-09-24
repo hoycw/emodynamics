@@ -90,13 +90,6 @@ end
 % !!! Kuan: now you need to make the data during the epochs (adjusted to
 % trials) into NaN
 
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Corr Analyses%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     
     %% Build null distribution
@@ -114,8 +107,8 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     % if any(isnan(bsln_cat(:))); error('why are there nans in baseline?'); end
     
     win_lim    = fn_sliding_window_lim(squeeze(bsln_hfa.powspctrm(1,1,1,:)),...
-        round(st.corrwin_len*trial_info.sample_rate),...
-        round(st.corrwin_step*trial_info.sample_rate));
+        round(st.win_len*trial_info.sample_rate),...
+        round(st.win_step*trial_info.sample_rate));
     
     % Build distribution of window averages
     % Create structure for baseline corr in fieldtrip style
@@ -222,8 +215,8 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     
     %% Compute Window Parameters
     win_lim    = fn_sliding_window_lim(squeeze(hfa_stat.powspctrm(1,1,1,:)),...
-        round(st.corrwin_len*trial_info.sample_rate),...
-        round(st.corrwin_step*trial_info.sample_rate));
+        round(st.win_len*trial_info.sample_rate),...
+        round(st.win_step*trial_info.sample_rate));
     win_center = round(mean(win_lim,2));
     
     %% Run Statistics
@@ -344,16 +337,17 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     
 end
 
-%%% Print results%%%%%%%%%%%%%%%%%%%
+%% Print results
 % Compile positive and negative stats
-corr_sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
+sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
 xcorr_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
+
 
 for m_ix = 1:numel(trial_info.video_id)
     for ch_ix = 1:numel(corr.label)
         % Consolidate to binary sig/non-sig
         if any(squeeze(corr.qmask(m_ix,ch_ix,:)))
-            corr_sig_mat(ch_ix,m_ix) = sum(squeeze(corr.qmask(m_ix,ch_ix,...
+            sig_mat(ch_ix,m_ix) = sum(squeeze(corr.qmask(m_ix,ch_ix,...
                 find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
             xcorr_mat(ch_ix,m_ix) = nanmean(squeeze(corr.r2(m_ix,ch_ix,...
                 find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
@@ -361,14 +355,16 @@ for m_ix = 1:numel(trial_info.video_id)
             %             % Flag whether positive or negative
             %             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
             %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
-            %                 corr_sig_mat(m_ix,ch_ix,2) = 1;
+            %                 sig_mat(m_ix,ch_ix,2) = 1;
             %             end
             %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))<0)
-            %                 corr_sig_mat(m_ix,ch_ix,3) = 1;
+            %                 sig_mat(m_ix,ch_ix,3) = 1;
             %             end
         end
     end
 end
+
+
 
 % Prep report
 sig_report_fname = [hfa_fname(1:end-4) '_' stat_id '_sig_report.txt'];
@@ -383,33 +379,23 @@ fprintf(sig_report,'%s (n = %i)\n',SBJ,numel(corr.label));
 fprintf(sig_report,['%-10s' repmat('%-10d',[1 numel(trial_info.video_id)]) '\n'],'label',trial_info.video_id);
 
 % Print summary lines (absolute)
-fprintf(sig_report,result_str, 'count', sum(corr_sig_mat>0,1));
+fprintf(sig_report,result_str, 'count', sum(sig_mat>0,1));
 fprintf(sig_report,strrep(result_str,'i','.3f'), 'percent',...
-    sum(corr_sig_mat>0,1)./numel(corr.label));
+    sum(sig_mat>0,1)./numel(corr.label));
 
 % Print Channel Lines
 for ch_ix = 1:numel(corr.label)
     % Report on significant electrodes for this SBJ
-    fprintf(sig_report,result_str,corr.label{ch_ix},corr_sig_mat(ch_ix,:));
+    fprintf(sig_report,result_str,corr.label{ch_ix},sig_mat(ch_ix,:));
 end
 fclose(sig_report);
 
-% Save Results 
+%% Save Results
 out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
 fprintf('===================================================\n');
 fprintf('--- Saving %s ------------------\n',out_fname);
 fprintf('===================================================\n');
-save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','corr_sig_mat');
-
-
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Actv Analyses%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','sig_mat');
 
 
 %% Print results II (Kuan)
@@ -552,7 +538,7 @@ end
 
 % Print Statistical Result Summary
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
-Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,corr_sig_mat)
+Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,sig_mat)
 Fig_nSig.Colormap = parula;
 set(gca,'FontSize',3) ;
 Fig=1;
