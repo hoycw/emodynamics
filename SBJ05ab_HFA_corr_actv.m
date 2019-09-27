@@ -550,8 +550,10 @@ actv_sig_mat = zeros([numel(actv.label) numel(trial_info.video_id)]);
 for m_ix = 1:numel(trial_info.video_id)
     for ch_ix = 1:numel(actv.label)
         % Consolidate to binary sig/non-sig
-        if any(squeeze(actv.mask(m_ix,ch_ix,:)))
-            actv_sig_mat(ch_ix,m_ix) = 1;
+        if any(squeeze(actv.mask(m_ix,ch_ix,:)))            
+            actv_sig_mat(ch_ix,m_ix) = sum(squeeze(actv.qmask(m_ix,ch_ix,...
+                find(actv.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film            
+            
 %             % Flag whether positive or negative
 %             sig_idx = squeeze(actv.qval(m_ix,ch_ix,:))<=st.alpha;
 %             if any(squeeze(actv.avg(m_ix,ch_ix,sig_idx))>0)
@@ -674,32 +676,7 @@ for m_ix = 1:numel(trial_info.video_id)
         axis([-inf inf -inf inf]);
         set(gca,'FontSize',3,'XMinorGrid','on') ;
     end
-    % plot xcorr
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+2);
-        plot(squeeze(corr.time)- times.bsln_len, tmp(:,:,lb_ix, m_ix));hold on;
-        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[-1,1],'Color','green')
-        for event_ix = 1: size(times.event{m_ix},2)
-            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
-                times.event{m_ix}(event_ix)- times.bsln_len],...
-                [-1,1]); hold on  ;
-            line_event.Color = 'black';
-        end
-        hold off;
-        xlabel(''), ylabel('xCorr'), title(loi_labels{lb_ix});
-        axis([0 times.movie_len(m_ix)+ times.recov_len -1 1]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
-    % plot lags
-    for lb_ix = 1:numel(loi_labels)
-        subplot(length(loi_labels)+1,4,(lb_ix*4)+4);
-%         plot(squeeze(corr.time)- times.bsln_len, tmp2(:,:,lb_ix, m_ix));
-        plot(squeeze(actv.time)- times.bsln_len, tmp2(:,:,lb_ix, m_ix));        
-        xlabel(''), ylabel('lag(ms)'), title(loi_labels{lb_ix});
-%         axis([0 times.movie_len(m_ix)+ times.recov_len 0 5000]);        
-        axis([0 times.movie_len(m_ix)+ times.recov_len 0 1]);
-        set(gca,'FontSize',3,'XMinorGrid','on') ;
-    end
+
     % Plot hfa
     for lb_ix = 1:numel(loi_labels)
         subplot(length(loi_labels)+1,4,(lb_ix*4)+1);
@@ -716,9 +693,46 @@ for m_ix = 1:numel(trial_info.video_id)
         axis([0 times.movie_len(m_ix)+ times.recov_len -5 10]);
         set(gca,'FontSize',3,'XMinorGrid','on') ;
     end
-    % Plot Sig
+    
+    % plot hfa sig
+    for lb_ix = 1:numel(loi_labels)
+        subplot(length(loi_labels)+1,4,(lb_ix*4)+2);
+%         plot(squeeze(corr.time)- times.bsln_len, tmp2(:,:,lb_ix, m_ix));
+        plot(squeeze(actv.time)- times.bsln_len, tmp2(:,:,lb_ix, m_ix)); hold on; 
+        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[-5,15],'Color','green')
+        for event_ix = 1: size(times.event{m_ix},2)
+            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
+                times.event{m_ix}(event_ix)- times.bsln_len],...
+                [-5,15]); hold on  ;
+            line_event.Color = 'black';
+        end
+        hold off;         
+        xlabel(''), ylabel('Sig'), title(loi_labels{lb_ix});
+%         axis([0 times.movie_len(m_ix)+ times.recov_len 0 5000]);        
+        axis([0 times.movie_len(m_ix)+ times.recov_len 0 1]);
+        set(gca,'FontSize',3,'XMinorGrid','on') ;
+    end
+    
+    % plot xcorr
     for lb_ix = 1:numel(loi_labels)
         subplot(length(loi_labels)+1,4,(lb_ix*4)+3);
+        plot(squeeze(corr.time)- times.bsln_len, tmp(:,:,lb_ix, m_ix));hold on;
+        plot([times.movie_len(m_ix),times.movie_len(m_ix)],[-1,1],'Color','green')
+        for event_ix = 1: size(times.event{m_ix},2)
+            line_event = plot([times.event{m_ix}(event_ix)- times.bsln_len,...
+                times.event{m_ix}(event_ix)- times.bsln_len],...
+                [-1,1]); hold on  ;
+            line_event.Color = 'black';
+        end
+        hold off;
+        xlabel(''), ylabel('xCorr'), title(loi_labels{lb_ix});
+        axis([0 times.movie_len(m_ix)+ times.recov_len -1 1]);
+        set(gca,'FontSize',3,'XMinorGrid','on') ;
+    end
+    
+    % Plot cross sig 
+    for lb_ix = 1:numel(loi_labels)
+        subplot(length(loi_labels)+1,4,(lb_ix*4)+4);
         plot(squeeze(corr.time)- times.bsln_len, tmp1(:,:,lb_ix, m_ix));hold on;
         plot([times.movie_len(m_ix),times.movie_len(m_ix)],[0,1],'Color','green')
         for event_ix = 1: size(times.event{m_ix},2)
@@ -732,6 +746,8 @@ for m_ix = 1:numel(trial_info.video_id)
         axis([0 times.movie_len(m_ix)+ times.recov_len 0 1]);
         set(gca,'FontSize',3,'XMinorGrid','on') ;
     end
+    
+    
     % Make Figures
     Fig=1;
     Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_Mov', num2str(m_ix),'_',times.movie_names{m_ix}]
@@ -745,7 +761,7 @@ Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,corr_sig_mat)
 Fig_nSig.Colormap = parula;
 set(gca,'FontSize',3) ;
 Fig=1;
-Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_Sigs']
+Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_CorrSigs']
 print(Fig,Fig_fname,'-dpng', '-r900');
 close all; 
 
@@ -754,7 +770,16 @@ Fig_xCorr = heatmap(times.movie_names,elec.gROIwlabel,xcorr_mat)
 Fig_xCorr.Colormap = parula;
 set(gca,'FontSize',3) ;
 Fig=1;
-Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_xCorr']
+Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_CorrXCorr']
+print(Fig,Fig_fname,'-dpng', '-r900');
+close all; 
+
+elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
+Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,actv_sig_mat)
+Fig_nSig.Colormap = parula;
+set(gca,'FontSize',3) ;
+Fig=1;
+Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_ActvSigs']
 print(Fig,Fig_fname,'-dpng', '-r900');
 close all; 
 
