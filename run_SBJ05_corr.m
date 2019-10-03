@@ -1,10 +1,39 @@
 
 
 
-SBJ = 'IR51';
-an_id = 'HGm_zscB2t3_sm4_wn250';
-stat_id = 'crIbi_MR_wl200_ws200_wl15k_ws1k_lg5k_abs';
 
+
+
+SBJ = 'IR77';
+an_id = 'HGm_zscB2t3_sm4_wn250';
+stat_id = 'crIbi_MR_wl200_ws200_wl15k_ws1k_lg5k_max';
+
+
+
+stat_ids = {'crIbi_MR_wl100_ws100_wl10k_ws1k_lg5k_abs',...
+            'crIbi_MR_wl100_ws100_wl10k_ws1k_lg5k_max',...
+            'crIbi_MR_wl100_ws100_wl15k_ws1k_lg5k_abs',...
+            'crIbi_MR_wl100_ws100_wl15k_ws1k_lg5k_max',...
+            'crIbi_MR_wl200_ws200_wl10k_ws1k_lg5k_abs',...
+            'crIbi_MR_wl200_ws200_wl10k_ws1k_lg5k_max',...
+            'crIbi_MR_wl200_ws200_wl15k_ws1k_lg5k_abs',...
+            'crIbi_MR_wl200_ws200_wl15k_ws1k_lg5k_max',...
+            'crRat_MR_wl100_ws100_wl10k_ws1k_lg5k_abs',...
+            'crRat_MR_wl100_ws100_wl10k_ws1k_lg5k_max',...
+            'crRat_MR_wl100_ws100_wl15k_ws1k_lg5k_abs',...
+            'crRat_MR_wl100_ws100_wl15k_ws1k_lg5k_max',...
+            'crRat_MR_wl200_ws200_wl10k_ws1k_lg5k_abs',...
+            'crRat_MR_wl200_ws200_wl10k_ws1k_lg5k_max',...
+            'crRat_MR_wl200_ws200_wl15k_ws1k_lg5k_abs',...
+            'crRat_MR_wl200_ws200_wl15k_ws1k_lg5k_max'};
+
+
+
+
+stat_id = 'crIbi_MR_wl200_ws200_wl15k_ws1k_lg5k_abs';
+        
+        
+        
 
 
 
@@ -70,7 +99,7 @@ ft_defaults
 
 %%
 for st_ix = 1:numel(stat_ids)
-    SBJ05ab_HFA_corr(SBJ,an_id,stat_ids{st_ix})
+    SBJ05ab_HFA_corr_actv(SBJ,an_id,stat_ids{st_ix})
 end
 
 

@@ -1,4 +1,4 @@
-function SBJ05ab_HFA_corr(SBJ,an_id,stat_id)
+function SBJ05ab_HFA_corr_actv(SBJ,an_id,stat_id)
 %   Calculates correlation with covariate in sliding windows
 %       Covariates: IBI, RSA, Rating time series
 %   Stats: alpha level of baseline correlations (fixation)
@@ -57,8 +57,10 @@ cfgs.trl = round(cfgs.trl);
 % !!! Kuan: deal with down sampling these data to the HFA sampling rate (an.resample_freq)
 if strcmp(st.model_lab,'crIBI')
     load([SBJ_vars.dirs.preproc,SBJ,'_ibi_',num2str(trial_info.sample_rate),'hz.mat']);
-    cov.trial{1} = smoothdata(ibi_1000hz_cubic,'gaussian',15*1000);
-    % Segment to trials
+    cov.trial{1} = smoothdata(ibi_1000hz_cubic,'gaussian',5*1000);
+%     cov.trial{1} = ibi_1000hz_cubic;
+
+% Segment to trials
     cov = ft_redefinetrial(cfgs, cov);
 elseif strcmp(st.model_lab,'crRsa')
     load([SBJ_vars.dirs.preproc,SBJ,'_rsa_',num2str(trial_info.sample_rate),'hz.mat']);
@@ -97,7 +99,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
+for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     
     %% Build null distribution
     fprintf('===================================================\n');
@@ -150,7 +152,7 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                     % curing crosscorr function
                     
                     tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                    tmp (1:(length(tmp)-1)/2)=[];
+%                     tmp (1:(length(tmp)-1)/2)=[];
                     
                     if run == 1;
                         if strcmp(st.xcorr_method,'max')
@@ -171,6 +173,9 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
                         bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
                         bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
+                    elseif run == 3;
+                        bsln.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000);
+                        bsln_vals = [bsln_vals tmp(st.win_lag*1000)];
                     end
                     
                     bsln.good_win(m_ix,w_ix) = 1;
@@ -178,7 +183,8 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
             end
         end
         % Compute threshold
-        bsln_sort = sort(abs(bsln_vals),'descend');
+%         bsln_sort = sort(abs(bsln_vals),'descend');
+        bsln_sort = sort(bsln_vals,'descend');        
         bsln.thresh(ch_ix) = bsln_sort(round(numel(bsln_sort)*st.alpha));
     end
     
@@ -264,7 +270,7 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                     % curing crosscorr function
                     
                     tmp = crosscorr(hfa_data,cov_data, st.win_lag*trial_info.sample_rate);
-                    tmp (1:(length(tmp)-1)/2)=[];
+%                     tmp (1:(length(tmp)-1)/2)=[];
                     
                     if run == 1;
                         if strcmp(st.xcorr_method,'max')
@@ -281,6 +287,8 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                     elseif run == 2;
                         corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
                         corr.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
+                    elseif run == 3;
+                        corr.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000);
                     end
                     
                     corr.good_win(m_ix,w_ix) = 1;
@@ -330,7 +338,10 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
         
         for ch_ix = 1: numel(corr.label)
             subplot(ceil(numel(corr.label)/10),10,ch_ix);
-            histogram(max_ix_all (:,ch_ix));
+            h = histogram(max_ix_all (:,ch_ix),10000);
+%             h = histogram(max_ix_all (:,ch_ix));
+            h.EdgeColor = 'r'
+            h.FaceColor = 'r'
             set(gca,'FontSize',3) ;
             title(corr.label{ch_ix});
         end
@@ -348,14 +359,13 @@ end
 % Compile positive and negative stats
 corr_sig_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
 xcorr_mat = zeros([numel(corr.label) numel(trial_info.video_id)]);
+xcorr_mat(find(xcorr_mat == 0)) = nan;
 
 for m_ix = 1:numel(trial_info.video_id)
     for ch_ix = 1:numel(corr.label)
         % Consolidate to binary sig/non-sig
         if any(squeeze(corr.qmask(m_ix,ch_ix,:)))
             corr_sig_mat(ch_ix,m_ix) = sum(squeeze(corr.qmask(m_ix,ch_ix,...
-                find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
-            xcorr_mat(ch_ix,m_ix) = nanmean(squeeze(corr.r2(m_ix,ch_ix,...
                 find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
             
             %             % Flag whether positive or negative
@@ -369,6 +379,29 @@ for m_ix = 1:numel(trial_info.video_id)
         end
     end
 end
+
+for m_ix = 1:numel(trial_info.video_id)
+    for ch_ix = 1:numel(corr.label)
+        % Consolidate to binary sig/non-sig
+             xcorr_mat(ch_ix,m_ix) = nanmean(squeeze(corr.r2(m_ix,ch_ix,...
+                find(corr.win_lim_s(:,1) < times.movie_len(m_ix)+times.bsln_len)))); % << only sum data from the film
+            
+            %             % Flag whether positive or negative
+            %             sig_idx = squeeze(corr.qval(m_ix,ch_ix,:))<=st.alpha;
+            %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))>0)
+            %                 corr_sig_mat(m_ix,ch_ix,2) = 1;
+            %             end
+            %             if any(squeeze(corr.r2(m_ix,ch_ix,sig_idx))<0)
+            %                 corr_sig_mat(m_ix,ch_ix,3) = 1;
+            %             end
+    end
+end
+
+
+
+
+
+
 
 % Prep report
 sig_report_fname = [hfa_fname(1:end-4) '_' stat_id '_sig_report.txt'];
@@ -393,13 +426,13 @@ for ch_ix = 1:numel(corr.label)
     fprintf(sig_report,result_str,corr.label{ch_ix},corr_sig_mat(ch_ix,:));
 end
 fclose(sig_report);
-
-% Save Results 
-out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
-fprintf('===================================================\n');
-fprintf('--- Saving %s ------------------\n',out_fname);
-fprintf('===================================================\n');
-save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','corr_sig_mat');
+% 
+% % Save Results 
+% out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
+% fprintf('===================================================\n');
+% fprintf('--- Saving %s ------------------\n',out_fname);
+% fprintf('===================================================\n');
+% save(out_fname,'-v7.3','corr','bsln','bsln_cov','cov_stat','st','corr_sig_mat');
 
 
 %%
@@ -451,7 +484,8 @@ for ch_ix = 1:numel(bsln_hfa.label)
         end
     end
     % Compute threshold
-    bsln_vals = sort(abs(reshape(bsln.avg(:,ch_ix,:),[size(bsln.avg,1)*size(bsln.avg,3) 1])),'descend');
+%     bsln_vals = sort(abs(reshape(bsln.avg(:,ch_ix,:),[size(bsln.avg,1)*size(bsln.avg,3) 1])),'descend');
+    bsln_vals = sort(reshape(bsln.avg(:,ch_ix,:),[size(bsln.avg,1)*size(bsln.avg,3) 1]),'descend');
     bsln.thresh(ch_ix) = bsln_vals(numel(bsln_vals)*st.alpha);
 end
 fprintf('\n');
@@ -591,12 +625,12 @@ end
 
 fclose(sig_report);
 
-%% Save Results
-out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
-fprintf('===================================================\n');
-fprintf('--- Saving %s ------------------\n',out_fname);
-fprintf('===================================================\n');
-save(out_fname,'-v7.3','actv','bsln','st','actv_sig_mat');
+% %% Save Results
+% out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
+% fprintf('===================================================\n');
+% fprintf('--- Saving %s ------------------\n',out_fname);
+% fprintf('===================================================\n');
+% save(out_fname,'-v7.3','actv','bsln','st','actv_sig_mat');
 
  end
 
@@ -777,11 +811,45 @@ close all;
 elec.gROIwlabel  = strcat(elec.gROI,'_',corr.label)
 Fig_nSig = heatmap(times.movie_names,elec.gROIwlabel,actv_sig_mat)
 Fig_nSig.Colormap = parula;
+% Fig_nSig.caxis([0, 20]);
 set(gca,'FontSize',3) ;
 Fig=1;
 Fig_fname = [SBJ_vars.dirs.proc,SBJ,'_',an_id,'_',stat_id,'_ResultSummary_ActvSigs']
 print(Fig,Fig_fname,'-dpng', '-r900');
 close all; 
 
+
+
+
+% 
+% 
+% 
+% actv_sig_mat_emotion(:,2) =xcorr_mat(:,1) + xcorr_mat(:,6)
+% actv_sig_mat_emotion(:,1) =xcorr_mat(:,2) + xcorr_mat(:,8)
+% actv_sig_mat_emotion(:,3) =xcorr_mat(:,3) + xcorr_mat(:,5)
+% actv_sig_mat_emotion(:,4) =xcorr_mat(:,4) + xcorr_mat(:,7)
+% 
+% 
+% 
+% Fig_nSig = heatmap(names,elec.gROIwlabel,actv_sig_mat_emotion)
+% Fig_nSig.Colormap = parula;
+% Fig_nSig.caxis([0, 1]);
+% 
+% 
+% names{1} = 'amument'
+% names{2} = 'disgust'
+% names{3} = 'fear'
+% names{4} = 'neutral'
+% 
+% 
+% actv_sig_mat_emotion(:,1) = (xcorr_mat(:,1) + xcorr_mat(:,6) + xcorr_mat(:,2) + xcorr_mat(:,8) + xcorr_mat(:,3) + xcorr_mat(:,5))/6
+% names{1} = 'all'
+
+%% Save Results
+out_fname = strcat(hfa_fname(1:end-4),'_',stat_id,'.mat');
+fprintf('===================================================\n');
+fprintf('--- Saving %s ------------------\n',out_fname);
+fprintf('===================================================\n');
+save(out_fname);
 
 end
