@@ -175,7 +175,9 @@ for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
                     elseif run == 3;
                         bsln.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000);
-                        bsln_vals = [bsln_vals tmp(st.win_lag*1000)];
+%                         bsln_vals = [bsln_vals tmp(st.win_lag*1000+st.win_lag*1000+1)];
+                        bsln_vals = [bsln_vals tmp(1)];
+
                     end
                     
                     bsln.good_win(m_ix,w_ix) = 1;
@@ -288,7 +290,9 @@ for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
                         corr.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
                     elseif run == 3;
-                        corr.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000);
+%                         corr.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000+st.win_lag*1000+1);
+                        corr.r2(m_ix,ch_ix,w_ix) = tmp(1);
+
                     end
                     
                     corr.good_win(m_ix,w_ix) = 1;
@@ -396,10 +400,6 @@ for m_ix = 1:numel(trial_info.video_id)
             %             end
     end
 end
-
-
-
-
 
 
 
