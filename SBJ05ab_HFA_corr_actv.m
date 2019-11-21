@@ -93,13 +93,29 @@ end
 % trials) into NaN
 
 %%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Smooth hfa data %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% for i = 1:8;
+%     for j = 1:136;
+% hfa.powspctrm_smooth(i,j,1,:) = smoothdata(hfa.powspctrm(i,j,1,:),'gaussian',5*1000);
+%     end
+% end
+% 
+% hfa.powspctrm = hfa.powspctrm_smooth
+% 
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Corr Analyses%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
+for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
     
     %% Build null distribution
     fprintf('===================================================\n');
@@ -169,10 +185,14 @@ for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                             bsln.max_ix (m_ix,ch_ix,w_ix)= find(abs(tmp) == max(abs(tmp)));
                         end
                         
+                        % Remove low r's, so they won't makde contribution to optimal time lag
+                        bsln.max_ix(find(abs(bsln.r2) < 0.1)) = NaN;
+                        
+                
                     elseif run == 2;
-                        bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
-                        bsln_vals = [bsln_vals tmp(mode(max_ix_all(:,ch_ix)))];
-                        bsln.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
+                        bsln.r2(m_ix,ch_ix,w_ix) = tmp(mode(round(max_ix_all(:,ch_ix),-3))+1);
+                        bsln_vals = [bsln_vals tmp(mode(round(max_ix_all(:,ch_ix),-3))+1)];
+                        bsln.max_ix (m_ix,ch_ix,w_ix)= mode(round(max_ix_all(:,ch_ix),-3));
                     elseif run == 3;
                         bsln.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000);
 %                         bsln_vals = [bsln_vals tmp(st.win_lag*1000+st.win_lag*1000+1)];
@@ -286,9 +306,12 @@ for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                             corr.max_ix (m_ix,ch_ix,w_ix)= find(abs(tmp) == max(abs(tmp)));
                         end
                         
+                        % Remove low r's, so they won't makde contribution to optimal time lag
+                        corr.max_ix(find(abs(corr.r2) < 0.1)) = NaN;
+                        
                     elseif run == 2;
-                        corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(max_ix_all(:,ch_ix)));
-                        corr.max_ix (m_ix,ch_ix,w_ix)= mode(max_ix_all(:,ch_ix));
+                        corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(round(max_ix_all(:,ch_ix),-3))+1);
+                        corr.max_ix (m_ix,ch_ix,w_ix)= mode(round(max_ix_all(:,ch_ix),-3));
                     elseif run == 3;
 %                         corr.r2(m_ix,ch_ix,w_ix) = tmp(st.win_lag*1000+st.win_lag*1000+1);
                         corr.r2(m_ix,ch_ix,w_ix) = tmp(1);
@@ -342,7 +365,7 @@ for run = 3:3 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
         
         for ch_ix = 1: numel(corr.label)
             subplot(ceil(numel(corr.label)/10),10,ch_ix);
-            h = histogram(max_ix_all (:,ch_ix),10000);
+            h = histogram(max_ix_all (:,ch_ix),100);
 %             h = histogram(max_ix_all (:,ch_ix));
             h.EdgeColor = 'r'
             h.FaceColor = 'r'
