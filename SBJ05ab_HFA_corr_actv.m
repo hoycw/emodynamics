@@ -186,7 +186,11 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         end
                         
                         % Remove low r's, so they won't makde contribution to optimal time lag
-                        bsln.max_ix(find(abs(bsln.r2) < 0.1)) = NaN;
+                        if bsln.r2(m_ix,ch_ix,w_ix) < .1
+                            bsln.max_ix (m_ix,ch_ix,w_ix) == NaN; 
+                        end
+                        
+%                         bsln.max_ix(find(abs(bsln.r2(m_ix,ch_ix,w_ix)) < 0.1)) = NaN;
                         
                 
                     elseif run == 2;
@@ -307,7 +311,11 @@ for run = 1:2 % Run 1 to get the optimal lag, Run 2 to perform formal analysis
                         end
                         
                         % Remove low r's, so they won't makde contribution to optimal time lag
-                        corr.max_ix(find(abs(corr.r2) < 0.1)) = NaN;
+%                         corr.max_ix(find(abs(corr.r2) < 0.1)) = NaN;
+                        if corr.r2(m_ix,ch_ix,w_ix) < .1;
+                            corr.max_ix(m_ix,ch_ix,w_ix) = NaN;
+                        end
+                         
                         
                     elseif run == 2;
                         corr.r2(m_ix,ch_ix,w_ix) = tmp(mode(round(max_ix_all(:,ch_ix),-3))+1);
